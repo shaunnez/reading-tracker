@@ -46,7 +46,9 @@ function InteractiveWordChip({
       className={`
         relative px-4 py-2 text-base sm:px-3 sm:py-1.5 sm:text-sm
         bg-white border rounded-lg font-mono text-gray-800
-        active:scale-95 transition-transform cursor-pointer
+        active:scale-95 transition-all duration-150 cursor-pointer
+        hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-100
+        hover:bg-indigo-50 hover:border-indigo-400 hover:font-semibold
         ${status === "complete"
           ? "border-green-400 bg-green-50"
           : status === "incomplete"
@@ -86,7 +88,9 @@ function InteractiveDictationCard({
       onClick={onClick}
       className={`
         relative bg-white rounded-xl border-2 border-dashed p-3 text-center
-        active:scale-95 transition-transform cursor-pointer
+        active:scale-95 transition-all duration-150 cursor-pointer
+        hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-100
+        hover:bg-indigo-50 hover:border-indigo-400 hover:font-semibold
         ${status === "complete"
           ? "border-green-400"
           : status === "incomplete"
@@ -251,7 +255,9 @@ export default function WordPracticeSection({
 
       {/* Example words at top */}
       {exampleEntries.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <>
+          <p className="text-xs text-indigo-400 italic mb-1">Select a word to start</p>
+          <div className="flex flex-wrap gap-2">
           {exampleEntries.map((entry) => (
             <InteractiveWordChip
               key={entry.word}
@@ -262,6 +268,7 @@ export default function WordPracticeSection({
             />
           ))}
         </div>
+        </>
       )}
 
       {/* Lesson plan card */}
@@ -301,6 +308,7 @@ export default function WordPracticeSection({
                   Minutes 9–12 · Practice Word List ({wordListEntries.length} words)
                 </h3>
               </div>
+              <p className="text-xs text-indigo-400 italic mb-1 pl-7">Select a word to start</p>
               <div className="flex flex-wrap gap-2 pl-7">
                 {wordListEntries.map((entry) => (
                   <InteractiveWordChip
@@ -326,6 +334,7 @@ export default function WordPracticeSection({
               <p className="text-xs text-indigo-600 mb-3 pl-7">
                 Say each word clearly — she writes it without seeing it, then check together.
               </p>
+              <p className="text-xs text-indigo-400 italic mb-1 pl-7">Select a word to start</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-7">
                 {dictationEntries.map((entry, i) => (
                   <InteractiveDictationCard
