@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createChild, joinChild, setActiveChild } from "@/lib/actions";
+import { createChild, joinChild, setActiveChild, clearChildData } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type ChildEntry = { id: string; name: string };
@@ -34,6 +35,15 @@ export default function ChildrenPage() {
   const [joinError, setJoinError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [clearTarget, setClearTarget] = useState<ChildEntry | null>(null);
+  const [clearOpts, setClearOpts] = useState({
+    progress: true,
+    sessions: false,
+    assessments: false,
+    books: false,
+  });
+  const [clearConfirmName, setClearConfirmName] = useState("");
+  const [clearLoading, setClearLoading] = useState(false);
 
   useEffect(() => {
     setMyChildren(loadChildren());
@@ -96,6 +106,23 @@ export default function ChildrenPage() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
+  async function handleClear() {
+    if (!clearTarget) return;
+    if (clearConfirmName !== clearTarget.name) return;
+    const anyChecked = Object.values(clearOpts).some(Boolean);
+    if (!anyChecked) return;
+    setClearLoading(true);
+    try {
+      await clearChildData(clearTarget.id, clearOpts);
+      setClearTarget(null);
+      setClearConfirmName("");
+      setClearOpts({ progress: true, sessions: false, assessments: false, books: false });
+      router.refresh();
+    } finally {
+      setClearLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-lg">
       <h1 className="text-2xl font-bold text-gray-900">Children</h1>
@@ -114,6 +141,18 @@ export default function ChildrenPage() {
                   <p className="text-xs text-gray-400 font-mono">{child.id}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={() => {
+                      setClearTarget(child);
+                      setClearConfirmName("");
+                      setClearOpts({ progress: true, sessions: false, assessments: false, books: false });
+                    }}
+                  >
+                    <Trash2 className="size-3 mr-1" /> Reset
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -182,6 +221,91 @@ export default function ChildrenPage() {
           </form>
         </CardContent>
       </Card>
+
+      {clearTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full border-2 border-red-200 overflow-hidden">
+            {/* Header */}
+            <div className="bg-red-50 px-5 py-4 border-b border-red-100 flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="font-bold text-red-900">Reset data for {clearTarget.name}</p>
+                <p className="text-xs text-red-600">This cannot be undone</p>
+              </div>
+            </div>
+
+            {/* Checklist */}
+            <div className="px-5 py-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Select what to clear</p>
+
+              {(
+                [
+                  { key: "progress", label: "Phonics progress", desc: "All skill statuses reset to not started" },
+                  { key: "sessions", label: "Session history", desc: "All logged reading sessions deleted" },
+                  { key: "assessments", label: "Assessments", desc: "All WPM, sounds, sight word results deleted" },
+                  { key: "books", label: "Books", desc: "All logged books deleted" },
+                ] as const
+              ).map(({ key, label, desc }) => (
+                <label
+                  key={key}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    clearOpts[key] ? "border-red-300 bg-red-50/50" : "border-gray-200"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={clearOpts[key]}
+                    onChange={(e) => setClearOpts((prev) => ({ ...prev, [key]: e.target.checked }))}
+                    className="size-4 accent-red-500"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{label}</p>
+                    <p className="text-xs text-gray-400">{desc}</p>
+                  </div>
+                </label>
+              ))}
+
+              {/* Name confirmation */}
+              <div className="pt-2">
+                <p className="text-xs text-gray-500 mb-1.5">
+                  Type <span className="font-bold text-red-700">{clearTarget.name}</span> to confirm
+                </p>
+                <Input
+                  value={clearConfirmName}
+                  onChange={(e) => setClearConfirmName(e.target.value)}
+                  placeholder="Type child's name…"
+                  className="border-red-200 focus-visible:ring-red-400"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 pb-5 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setClearTarget(null);
+                  setClearConfirmName("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                disabled={
+                  clearConfirmName !== clearTarget.name ||
+                  !Object.values(clearOpts).some(Boolean) ||
+                  clearLoading
+                }
+                onClick={handleClear}
+              >
+                {clearLoading ? "Clearing…" : "Clear selected"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
