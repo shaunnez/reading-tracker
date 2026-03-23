@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
-import { X, ChevronLeft, ChevronRight, Check, CircleX, RotateCcw } from "lucide-react";
+import { useEffect, useCallback, useState } from "react";
+import { X, ChevronLeft, ChevronRight, Check, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getWordEmoji } from "@/lib/word-emoji";
 import { useSwipe } from "./use-swipe";
@@ -30,6 +30,7 @@ type Props = {
   heroText: string;
   completionStatus: Map<string, WordStatus>;
   onStatusChange: (key: string, status: WordStatus | null) => void;
+  onFinish: () => void;
 };
 
 function statusKey(entry: WordEntry) {
@@ -67,6 +68,7 @@ export default function WordModal({
   heroText,
   completionStatus,
   onStatusChange,
+  onFinish,
 }: Props) {
   const entry = words[currentIndex];
   if (!entry) return null;
@@ -75,6 +77,10 @@ export default function WordModal({
   const status = completionStatus.get(key) ?? null;
   const emoji = getWordEmoji(entry.word);
   const total = words.length;
+  const isLast = currentIndex === total - 1;
+
+  // Tap-to-reveal state (resets when word changes)
+  const [revealed, setRevealed] = useState(false);
 
   const goNext = useCallback(() => {
     if (currentIndex < total - 1) onIndexChange(currentIndex + 1);
@@ -83,6 +89,26 @@ export default function WordModal({
   const goPrev = useCallback(() => {
     if (currentIndex > 0) onIndexChange(currentIndex - 1);
   }, [currentIndex, onIndexChange]);
+
+  // Reset reveal when navigating to a new word
+  useEffect(() => {
+    setRevealed(false);
+  }, [currentIndex]);
+
+  const handleComplete = useCallback(() => {
+    if (status === "complete") {
+      // Toggle off
+      onStatusChange(key, null);
+    } else {
+      // Mark complete then auto-advance
+      onStatusChange(key, "complete");
+      if (!isLast) {
+        goNext();
+      } else {
+        onFinish();
+      }
+    }
+  }, [status, key, onStatusChange, isLast, goNext, onFinish]);
 
   const swipeHandlers = useSwipe(goNext, goPrev);
 
@@ -120,22 +146,38 @@ export default function WordModal({
         className="flex-1 flex flex-col items-center justify-center px-6 select-none"
         {...swipeHandlers}
       >
-        {/* Emoji or styled letter fallback */}
-        <div className="mb-6">
-          {emoji ? (
-            <span className="text-8xl leading-none" aria-hidden="true">
-              {emoji}
-            </span>
+        {/* Emoji / letter — tap to reveal */}
+        <button
+          type="button"
+          onClick={() => setRevealed(true)}
+          className="mb-6 focus:outline-none"
+          aria-label={revealed ? undefined : "Tap to reveal picture"}
+        >
+          {revealed ? (
+            <div
+              className="animate-in zoom-in-50 fade-in duration-300"
+              style={{ animationFillMode: "both" }}
+            >
+              {emoji ? (
+                <span className="text-8xl leading-none" aria-hidden="true">
+                  {emoji}
+                </span>
+              ) : (
+                <div className={`w-28 h-28 rounded-full flex items-center justify-center ${heroBg}`}>
+                  <span className={`text-5xl font-black ${heroText}`}>
+                    {entry.word.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
           ) : (
             <div
-              className={`w-28 h-28 rounded-full flex items-center justify-center ${heroBg}`}
+              className={`w-28 h-28 rounded-full flex items-center justify-center ${heroBg} border-4 border-dashed border-current/30 transition-all`}
             >
-              <span className={`text-5xl font-black ${heroText}`}>
-                {entry.word.charAt(0).toUpperCase()}
-              </span>
+              <span className="text-4xl">👆</span>
             </div>
           )}
-        </div>
+        </button>
 
         {/* Word */}
         <HighlightedWord
@@ -158,15 +200,6 @@ export default function WordModal({
             {status === "complete" ? "Complete" : "Incomplete"}
           </div>
         )}
-
-        {/* Future play button placeholder */}
-        <button
-          disabled
-          className="mt-6 flex items-center gap-1.5 text-gray-300 text-sm cursor-not-allowed"
-          aria-label="Play pronunciation (coming soon)"
-        >
-          <span className="text-xl">🔊</span> Coming soon
-        </button>
       </div>
 
       {/* Bottom controls */}
@@ -186,14 +219,14 @@ export default function WordModal({
             variant={status === "complete" ? "default" : "outline"}
             size="lg"
             className="flex-1 max-w-36"
-            onClick={() => onStatusChange(key, status === "complete" ? null : "complete")}
+            onClick={handleComplete}
           >
             <Check className="size-4" />
             Complete
           </Button>
         </div>
 
-        {/* Navigation arrows */}
+        {/* Navigation */}
         <div className="flex justify-between items-center">
           <Button
             variant="ghost"
@@ -204,15 +237,27 @@ export default function WordModal({
             <ChevronLeft className="size-5" />
             Prev
           </Button>
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={goNext}
-            disabled={currentIndex === total - 1}
-          >
-            Next
-            <ChevronRight className="size-5" />
-          </Button>
+
+          {isLast ? (
+            <Button
+              variant="default"
+              size="lg"
+              className="text-base px-6 bg-green-600 hover:bg-green-700"
+              onClick={onFinish}
+            >
+              Finish 🎉
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={goNext}
+              disabled={currentIndex === total - 1}
+            >
+              Next
+              <ChevronRight className="size-5" />
+            </Button>
+          )}
         </div>
       </footer>
     </div>
