@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { updateSkillStatus } from "@/lib/actions";
-import { Badge } from "@/components/ui/badge";
 
 const PHASE_INFO = [
   null,
@@ -30,23 +29,43 @@ const STATUS_CYCLE: Record<string, "not_started" | "in_progress" | "mastered"> =
   mastered: "not_started",
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  not_started: "bg-white border-gray-200 text-gray-600 hover:border-gray-300",
-  in_progress: "bg-yellow-50 border-yellow-300 text-yellow-900",
-  mastered: "bg-green-50 border-green-300 text-green-900",
-};
-
-const STATUS_BADGES: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  not_started: { label: "Not started", variant: "outline" },
-  in_progress: { label: "In progress", variant: "default" },
-  mastered: { label: "Mastered ✓", variant: "secondary" },
+const STATUS_CONFIG: Record<string, {
+  cardClass: string;
+  chipClass: string;
+  label: string;
+  icon: string;
+  nextLabel: string;
+}> = {
+  not_started: {
+    cardClass: "bg-white border-gray-200",
+    chipClass: "bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300",
+    label: "Not started",
+    icon: "⬜",
+    nextLabel: "Mark in progress",
+  },
+  in_progress: {
+    cardClass: "bg-yellow-50 border-yellow-300",
+    chipClass: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 active:bg-yellow-300",
+    label: "In progress",
+    icon: "🟨",
+    nextLabel: "Mark mastered",
+  },
+  mastered: {
+    cardClass: "bg-green-50 border-green-300",
+    chipClass: "bg-green-100 text-green-800 hover:bg-green-200 active:bg-green-300",
+    label: "Mastered ✓",
+    icon: "🟩",
+    nextLabel: "Reset to not started",
+  },
 };
 
 export default function PhonicsMap({ skills: initialSkills }: { skills: Skill[] }) {
   const [skills, setSkills] = useState(initialSkills);
   const [isPending, startTransition] = useTransition();
 
-  const handleClick = (skill: Skill) => {
+  const handleStatusToggle = (e: React.MouseEvent, skill: Skill) => {
+    e.preventDefault();
+    e.stopPropagation();
     const nextStatus = STATUS_CYCLE[skill.status];
     setSkills((prev) =>
       prev.map((s) => (s.id === skill.id ? { ...s, status: nextStatus } : s))
@@ -55,13 +74,12 @@ export default function PhonicsMap({ skills: initialSkills }: { skills: Skill[] 
   };
 
   const phases = [1, 2, 3, 4];
-
   const mastered = skills.filter((s) => s.status === "mastered").length;
   const total = skills.length;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 text-sm text-gray-500">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
         <span>🟩 Mastered ({mastered})</span>
         <span>🟨 In progress</span>
         <span>⬜ Not started ({total - mastered})</span>
@@ -86,39 +104,40 @@ export default function PhonicsMap({ skills: initialSkills }: { skills: Skill[] 
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {phaseSkills.map((skill) => {
-                const badge = STATUS_BADGES[skill.status];
+                const cfg = STATUS_CONFIG[skill.status];
                 return (
-                  <button
+                  <Link
                     key={skill.id}
-                    onClick={() => handleClick(skill)}
-                    className={`text-left rounded-lg border p-3 transition-all ${STATUS_STYLES[skill.status]}`}
+                    href={`/phonics/${skill.id}`}
+                    className={`block rounded-lg border p-3 transition-all hover:shadow-sm ${cfg.cardClass}`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-tight">
-                          <span className="text-gray-400 mr-1">#{skill.sequenceOrder}</span>
-                          {skill.name}
-                        </p>
-                        {skill.examples && (
-                          <p className="text-xs text-gray-400 mt-0.5 font-mono truncate">
-                            {skill.examples}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <Badge variant={badge.variant} className="text-xs">
-                          {badge.label}
-                        </Badge>
-                        <Link
-                          href={`/phonics/${skill.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-xs text-indigo-600 hover:underline whitespace-nowrap"
-                        >
-                          Start lesson →
-                        </Link>
-                      </div>
+                    {/* Skill name + examples */}
+                    <p className="text-sm font-medium leading-tight mb-1">
+                      <span className="text-gray-400 mr-1">#{skill.sequenceOrder}</span>
+                      {skill.name}
+                    </p>
+                    {skill.examples && (
+                      <p className="text-xs text-gray-400 font-mono truncate mb-3">
+                        {skill.examples}
+                      </p>
+                    )}
+
+                    {/* Bottom row: status toggle + start lesson */}
+                    <div className="flex items-center justify-between gap-2 mt-auto">
+                      <button
+                        onClick={(e) => handleStatusToggle(e, skill)}
+                        title={cfg.nextLabel}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${cfg.chipClass}`}
+                      >
+                        <span>{cfg.icon}</span>
+                        <span>{cfg.label}</span>
+                      </button>
+
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 shrink-0">
+                        Start lesson →
+                      </span>
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
