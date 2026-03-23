@@ -2,7 +2,7 @@
 
 import { getDb } from "./db";
 import { phonicsSkills, sessions, books, assessments, resources } from "./db/schema";
-import { eq, desc, asc, and, lte, gte } from "drizzle-orm";
+import { eq, desc, asc, and, lte, gte, lt, gt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // ---- Phonics Skills ----
@@ -108,6 +108,32 @@ export async function getResources(levelMin: number, levelMax: number) {
       )
     )
     .orderBy(asc(resources.isFree), asc(resources.type));
+}
+
+// ---- Placement test result ----
+
+export async function applyPlacementResult(startingSkillSeq: number) {
+  const db = getDb();
+  const today = new Date().toISOString().split("T")[0];
+  // Mark all skills before the starting point as mastered
+  if (startingSkillSeq > 1) {
+    await db
+      .update(phonicsSkills)
+      .set({ status: "mastered", masteredDate: today })
+      .where(lt(phonicsSkills.sequenceOrder, startingSkillSeq));
+  }
+  // Mark the recommended starting skill as in_progress
+  await db
+    .update(phonicsSkills)
+    .set({ status: "in_progress", masteredDate: null })
+    .where(eq(phonicsSkills.sequenceOrder, startingSkillSeq));
+  // Mark everything after as not_started
+  await db
+    .update(phonicsSkills)
+    .set({ status: "not_started", masteredDate: null })
+    .where(gt(phonicsSkills.sequenceOrder, startingSkillSeq));
+  revalidatePath("/phonics");
+  revalidatePath("/");
 }
 
 // ---- Dashboard stats ----
