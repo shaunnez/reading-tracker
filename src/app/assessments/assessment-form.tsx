@@ -16,7 +16,7 @@ const TYPES = [
   { value: "sight_words", label: "Sight Words Known" },
 ];
 
-export default function AssessmentForm() {
+export default function AssessmentForm({ childId }: { childId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState("wcpm");
@@ -29,7 +29,7 @@ export default function AssessmentForm() {
     if (!value) return;
     setLoading(true);
     try {
-      await createAssessment({ date, type, value: parseFloat(value), notes: notes || undefined });
+      await createAssessment({ childId, date, type, value: parseFloat(value), notes: notes || undefined });
       setValue("");
       setNotes("");
       router.refresh();

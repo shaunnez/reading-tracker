@@ -3,8 +3,10 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSkillById, getResources } from "@/lib/actions";
+import { getActiveChildId } from "@/lib/child-cookie";
 import { Badge } from "@/components/ui/badge";
 import WordPracticeSection from "./word-practice-section";
+import NoChildBanner from "@/components/no-child-banner";
 
 // ─── Phoneme visual data ──────────────────────────────────────────────────────
 // Each skill gets: letters shown large, sound notation, emoji anchor, keyword,
@@ -97,8 +99,10 @@ const STATUS_LABELS: Record<string, string> = {
 type Props = { params: Promise<{ id: string }> };
 
 export default async function LessonPage({ params }: Props) {
+  const childId = await getActiveChildId();
+  if (!childId) return <NoChildBanner />;
   const { id } = await params;
-  const skill = await getSkillById(parseInt(id, 10));
+  const skill = await getSkillById(parseInt(id, 10), childId);
   if (!skill) notFound();
 
   const matchingResources = await getResources(skill.sequenceOrder, skill.sequenceOrder);
@@ -165,6 +169,7 @@ export default async function LessonPage({ params }: Props) {
         heroBg={visual?.heroBg ?? "bg-gray-50"}
         heroText={visual?.heroText ?? "text-gray-700"}
         skillId={skill.id}
+        childId={childId}
         skillStatus={skill.status}
         warmup={skill.warmup}
         introduction={skill.introduction}

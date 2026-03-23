@@ -1,16 +1,28 @@
 import { getDashboardStats } from "@/lib/actions";
+import { getActiveChildId } from "@/lib/child-cookie";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
+import NoChildBanner from "@/components/no-child-banner";
 
 const PHASE_LABELS = ["", "Months 1-3: Foundation", "Months 4-6: Consolidation", "Months 7-9: Expansion", "Months 10-12: Independence"];
 const WCPM_TARGETS = [0, 30, 70, 85, 90]; // end-of-phase targets
 
 export default async function DashboardPage() {
+  const childId = await getActiveChildId();
+  if (!childId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-gray-900">Reading Tracker</h1>
+        <NoChildBanner />
+      </div>
+    );
+  }
+
   let stats;
   try {
-    stats = await getDashboardStats();
+    stats = await getDashboardStats(childId);
   } catch {
     return (
       <div className="space-y-4">

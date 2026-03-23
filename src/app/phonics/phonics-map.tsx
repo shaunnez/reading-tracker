@@ -59,7 +59,7 @@ const STATUS_CONFIG: Record<string, {
   },
 };
 
-export default function PhonicsMap({ skills: initialSkills }: { skills: Skill[] }) {
+export default function PhonicsMap({ skills: initialSkills, childId }: { skills: Skill[]; childId: string }) {
   const [skills, setSkills] = useState(initialSkills);
   const [isPending, startTransition] = useTransition();
 
@@ -70,7 +70,7 @@ export default function PhonicsMap({ skills: initialSkills }: { skills: Skill[] 
     setSkills((prev) =>
       prev.map((s) => (s.id === skill.id ? { ...s, status: nextStatus } : s))
     );
-    startTransition(() => updateSkillStatus(skill.id, nextStatus));
+    startTransition(() => updateSkillStatus(skill.id, nextStatus, childId));
   };
 
   const phases = [1, 2, 3, 4];

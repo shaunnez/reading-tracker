@@ -146,6 +146,7 @@ type Props = {
   heroBg: string;
   heroText: string;
   skillId: number;
+  childId: string;
   skillStatus: string;
   warmup?: string | null;
   introduction?: string | null;
@@ -165,6 +166,7 @@ export default function WordPracticeSection({
   heroBg,
   heroText,
   skillId,
+  childId,
   skillStatus,
   warmup,
   introduction,
@@ -215,7 +217,7 @@ export default function WordPracticeSection({
     if (localStatus === "not_started") {
       setLocalStatus("in_progress");
       startTransition(() => {
-        updateSkillStatus(skillId, "in_progress");
+        updateSkillStatus(skillId, "in_progress", childId);
       });
     }
   }, [localStatus, skillId, startTransition]);
@@ -234,7 +236,7 @@ export default function WordPracticeSection({
     setShowConfetti(true);
     playVictorySound();
     startTransition(() => {
-      updateSkillStatus(skillId, "mastered");
+      updateSkillStatus(skillId, "mastered", childId);
     });
     setTimeout(() => {
       router.push("/phonics");

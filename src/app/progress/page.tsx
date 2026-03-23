@@ -1,12 +1,16 @@
 export const dynamic = "force-dynamic";
 import { getAssessments, getSessions, getPhonicsSkills } from "@/lib/actions";
+import { getActiveChildId } from "@/lib/child-cookie";
 import ProgressCharts from "./progress-charts";
+import NoChildBanner from "@/components/no-child-banner";
 
 export default async function ProgressPage() {
+  const childId = await getActiveChildId();
+  if (!childId) return <NoChildBanner />;
   const [assessments, sessions, skills] = await Promise.all([
-    getAssessments(),
-    getSessions(90),
-    getPhonicsSkills(),
+    getAssessments(childId),
+    getSessions(childId, 90),
+    getPhonicsSkills(childId),
   ]);
 
   return (

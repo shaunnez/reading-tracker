@@ -310,7 +310,7 @@ function ResultsScreen({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function PlacementTest({ skills }: { skills: Skill[] }) {
+export default function PlacementTest({ skills, childId }: { skills: Skill[]; childId: string }) {
   const router = useRouter();
 
   // Binary search state: find first skill the child can't do
@@ -381,7 +381,7 @@ export default function PlacementTest({ skills }: { skills: Skill[] }) {
   const handleApply = () => {
     const seq = Math.max(1, Math.min(recommendedSeq, 48));
     startTransition(async () => {
-      await applyPlacementResult(seq);
+      await applyPlacementResult(seq, childId);
       setApplied(true);
       setTimeout(() => router.push("/phonics"), 1500);
     });

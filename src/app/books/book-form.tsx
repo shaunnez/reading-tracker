@@ -19,7 +19,7 @@ const LEVEL_OPTIONS = [
   { value: 38, label: "Multisyllabic words" },
 ];
 
-export default function BookForm({ currentSkillLevel }: { currentSkillLevel: number }) {
+export default function BookForm({ currentSkillLevel, childId }: { currentSkillLevel: number; childId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
@@ -35,6 +35,7 @@ export default function BookForm({ currentSkillLevel }: { currentSkillLevel: num
     setLoading(true);
     try {
       await createBook({
+        childId,
         title,
         series: series || undefined,
         phonicsLevel: parseInt(level),
