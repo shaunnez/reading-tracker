@@ -83,7 +83,7 @@ export default function ProgressCharts({
   return (
     <div className="space-y-6">
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardContent className="pt-4 text-center">
             <p className="text-3xl font-bold text-indigo-600">{totalSessions}</p>
@@ -163,7 +163,8 @@ export default function ProgressCharts({
           <CardTitle className="text-base">Session Streak — Last 60 Days</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-1 flex-wrap">
+          <div className="overflow-x-auto">
+          <div className="flex gap-1 min-w-max">
             {weeks.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-1">
                 {week.map((day) => (
@@ -177,6 +178,7 @@ export default function ProgressCharts({
                 ))}
               </div>
             ))}
+          </div>
           </div>
           <p className="text-xs text-gray-400 mt-2">
             Each square = 1 day · Purple = session logged
