@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 import { getAssessments } from "@/lib/actions";
+import { getActiveChildId } from "@/lib/child-cookie";
 import AssessmentForm from "./assessment-form";
+import NoChildBanner from "@/components/no-child-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -25,7 +27,9 @@ const GRADE1_BENCHMARKS: Record<string, { label: string; value: number }[]> = {
 };
 
 export default async function AssessmentsPage() {
-  const allAssessments = await getAssessments();
+  const childId = await getActiveChildId();
+  if (!childId) return <NoChildBanner />;
+  const allAssessments = await getAssessments(childId);
 
   const grouped = allAssessments.reduce<Record<string, typeof allAssessments>>((acc, a) => {
     if (!acc[a.type]) acc[a.type] = [];
@@ -43,7 +47,7 @@ export default async function AssessmentsPage() {
       <div className="grid sm:grid-cols-2 gap-6">
         <div>
           <h2 className="font-semibold text-gray-700 mb-3">Log New Assessment</h2>
-          <AssessmentForm />
+          <AssessmentForm childId={childId} />
         </div>
 
         <div className="space-y-4">

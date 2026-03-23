@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+type ChildEntry = { id: string; name: string };
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
@@ -11,11 +13,24 @@ const NAV_ITEMS = [
   { href: "/progress", label: "Progress" },
   { href: "/books", label: "Books" },
   { href: "/assessments", label: "Assessments" },
+  { href: "/children", label: "Children" },
 ];
 
-export default function NavBar() {
+export default function NavBar({ activeChildId }: { activeChildId: string | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const [activeChildName, setActiveChildName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activeChildId) return;
+    try {
+      const list: ChildEntry[] = JSON.parse(localStorage.getItem("myChildren") ?? "[]");
+      const found = list.find((c) => c.id === activeChildId);
+      if (found) setActiveChildName(found.name);
+    } catch {
+      // ignore
+    }
+  }, [activeChildId]);
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -26,6 +41,9 @@ export default function NavBar() {
           onClick={() => setOpen(false)}
         >
           📚 Reading Tracker
+          {activeChildName && (
+            <span className="ml-2 text-gray-400 font-normal">— {activeChildName}</span>
+          )}
         </Link>
 
         {/* Desktop nav */}

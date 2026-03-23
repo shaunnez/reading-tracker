@@ -1,4 +1,21 @@
-import { pgTable, serial, text, integer, date, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, date, timestamp, real, primaryKey } from "drizzle-orm/pg-core";
+
+export const children = pgTable("children", {
+  id: text("id").primaryKey(), // 8-char random code — also serves as share code
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const childSkillProgress = pgTable(
+  "child_skill_progress",
+  {
+    childId: text("child_id").notNull().references(() => children.id),
+    skillId: integer("skill_id").notNull(),
+    status: text("status").notNull().default("not_started"),
+    masteredDate: date("mastered_date"),
+  },
+  (t) => [primaryKey({ columns: [t.childId, t.skillId] })]
+);
 
 export const phonicsSkills = pgTable("phonics_skills", {
   id: serial("id").primaryKey(),
@@ -30,6 +47,7 @@ export const resources = pgTable("resources", {
 
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
+  childId: text("child_id").references(() => children.id),
   date: date("date").notNull(),
   durationMinutes: integer("duration_minutes"),
   phonicsSkillId: integer("phonics_skill_id").references(() => phonicsSkills.id),
@@ -41,6 +59,7 @@ export const sessions = pgTable("sessions", {
 
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
+  childId: text("child_id").references(() => children.id),
   title: text("title").notNull(),
   series: text("series"),
   phonicsLevel: integer("phonics_level").notNull(), // maps to sequence_order range
@@ -52,6 +71,7 @@ export const books = pgTable("books", {
 
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
+  childId: text("child_id").references(() => children.id),
   date: date("date").notNull(),
   type: text("type").notNull(), // wcpm | sounds_known | words_decoded | sight_words
   value: real("value").notNull(),

@@ -33,7 +33,7 @@ type Skill = {
   status: string;
 };
 
-export default function SessionForm({ skills }: { skills: Skill[] }) {
+export default function SessionForm({ skills, childId }: { skills: Skill[]; childId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
@@ -54,6 +54,7 @@ export default function SessionForm({ skills }: { skills: Skill[] }) {
     setLoading(true);
     try {
       await createSession({
+        childId,
         date,
         durationMinutes: duration ? parseInt(duration) : undefined,
         phonicsSkillId: skillId ? parseInt(skillId) : undefined,

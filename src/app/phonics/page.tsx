@@ -1,10 +1,14 @@
 export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { getPhonicsSkills } from "@/lib/actions";
+import { getActiveChildId } from "@/lib/child-cookie";
 import PhonicsMap from "./phonics-map";
+import NoChildBanner from "@/components/no-child-banner";
 
 export default async function PhonicsPage() {
-  const skills = await getPhonicsSkills();
+  const childId = await getActiveChildId();
+  if (!childId) return <NoChildBanner />;
+  const skills = await getPhonicsSkills(childId);
   const anyStarted = skills.some((s) => s.status !== "not_started");
   return (
     <div>
@@ -26,7 +30,7 @@ export default async function PhonicsPage() {
           🧭 {anyStarted ? "Re-test" : "Placement test"}
         </Link>
       </div>
-      <PhonicsMap skills={skills} />
+      <PhonicsMap skills={skills} childId={childId} />
     </div>
   );
 }

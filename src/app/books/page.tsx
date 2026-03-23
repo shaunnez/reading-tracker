@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 import { getBooks, getPhonicsSkills } from "@/lib/actions";
+import { getActiveChildId } from "@/lib/child-cookie";
 import BookForm from "./book-form";
+import NoChildBanner from "@/components/no-child-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -22,7 +24,9 @@ function getPhonicsLabel(level: number): string {
 }
 
 export default async function BooksPage() {
-  const [allBooks, skills] = await Promise.all([getBooks(), getPhonicsSkills()]);
+  const childId = await getActiveChildId();
+  if (!childId) return <NoChildBanner />;
+  const [allBooks, skills] = await Promise.all([getBooks(childId), getPhonicsSkills(childId)]);
   const currentSkill = skills.find((s) => s.status === "in_progress") ?? skills.find((s) => s.status === "not_started");
 
   return (
@@ -35,7 +39,7 @@ export default async function BooksPage() {
       <div className="grid sm:grid-cols-2 gap-6">
         <div>
           <h2 className="font-semibold text-gray-700 mb-3">Log a Book</h2>
-          <BookForm currentSkillLevel={currentSkill?.sequenceOrder ?? 1} />
+          <BookForm currentSkillLevel={currentSkill?.sequenceOrder ?? 1} childId={childId} />
         </div>
 
         <div>
