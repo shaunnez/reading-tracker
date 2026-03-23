@@ -93,32 +93,6 @@ const STATUS_LABELS: Record<string, string> = {
   mastered: "Mastered ✓",
 };
 
-// ─── Word chip with highlighted target phoneme ────────────────────────────────
-function WordChip({ word, highlight }: { word: string; highlight?: string }) {
-  if (!highlight) {
-    return (
-      <span className="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg font-mono text-sm text-gray-800">
-        {word}
-      </span>
-    );
-  }
-  const regex = new RegExp(`(${highlight})`, "i");
-  const parts = word.split(regex);
-  return (
-    <span className="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg font-mono text-sm text-gray-800">
-      {parts.map((part, i) =>
-        regex.test(part) ? (
-          <span key={i} className="text-indigo-600 font-bold underline decoration-indigo-300">
-            {part}
-          </span>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      )}
-    </span>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 type Props = { params: Promise<{ id: string }> };
 
@@ -182,54 +156,19 @@ export default async function LessonPage({ params }: Props) {
         </div>
       )}
 
-      {/* Example words — interactive, clickable to open modal */}
+      {/* Unified interactive section: examples, lesson plan, word modal */}
       <WordPracticeSection
         examples={examples}
-        wordList={[]}
-        dictationWords={[]}
+        wordList={wordList}
+        dictationWords={dictationWords}
         highlight={visual?.highlight}
         heroBg={visual?.heroBg ?? "bg-gray-50"}
         heroText={visual?.heroText ?? "text-gray-700"}
+        skillId={skill.id}
+        skillStatus={skill.status}
+        warmup={skill.warmup}
+        introduction={skill.introduction}
       />
-
-      {/* ── Session plan ─────────────────────────────────────── */}
-      <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5 space-y-5">
-        <h2 className="font-semibold text-indigo-900 text-base">📋 Today&apos;s Lesson Plan</h2>
-
-        {skill.warmup && (
-          <section>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg" aria-hidden="true">🎤</span>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                Minutes 1–3 · Warm-up
-              </h3>
-            </div>
-            <p className="text-sm text-gray-800 leading-relaxed pl-7">{skill.warmup}</p>
-          </section>
-        )}
-
-        {skill.introduction && (
-          <section>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg" aria-hidden="true">💡</span>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                Minutes 4–8 · Introduction
-              </h3>
-            </div>
-            <p className="text-sm text-gray-800 leading-relaxed pl-7">{skill.introduction}</p>
-          </section>
-        )}
-
-        {/* Practice word list + dictation — interactive client component */}
-        <WordPracticeSection
-          examples={[]}
-          wordList={wordList}
-          dictationWords={dictationWords}
-          highlight={visual?.highlight}
-          heroBg={visual?.heroBg ?? "bg-gray-50"}
-          heroText={visual?.heroText ?? "text-gray-700"}
-        />
-      </div>
 
       {/* Tips for parents */}
       {skill.tipsForParents && (

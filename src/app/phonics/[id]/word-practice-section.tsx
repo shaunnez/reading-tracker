@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Check, CircleX } from "lucide-react";
 import WordModal, { type WordEntry, type WordStatus } from "./word-modal";
+import { updateSkillStatus } from "@/lib/actions";
+import ConfettiCanvas from "./confetti-canvas";
 
-// ─── Interactive word chip (button version of WordChip) ──────────────────────
+// ─── Interactive word chip ────────────────────────────────────────────────────
 
 function InteractiveWordChip({
   word,
@@ -64,7 +67,7 @@ function InteractiveWordChip({
   );
 }
 
-// ─── Dictation word card (interactive version) ───────────────────────────────
+// ─── Dictation word card ──────────────────────────────────────────────────────
 
 function InteractiveDictationCard({
   word,
@@ -106,7 +109,34 @@ function InteractiveDictationCard({
   );
 }
 
-// ─── Main section component ──────────────────────────────────────────────────
+// ─── Victory sound ────────────────────────────────────────────────────────────
+
+function playVictorySound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
+    // Ascending C-major arpeggio: C5 E5 G5 C6
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      const t = ctx.currentTime + i * 0.15;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.35, t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+      osc.start(t);
+      osc.stop(t + 0.65);
+    });
+  } catch (_) {
+    // Audio not available — silently ignore
+  }
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
   examples: string[];
@@ -115,11 +145,17 @@ type Props = {
   highlight?: string;
   heroBg: string;
   heroText: string;
+  skillId: number;
+  skillStatus: string;
+  warmup?: string | null;
+  introduction?: string | null;
 };
 
-function statusKey(section: string, word: string) {
+function sKey(section: string, word: string) {
   return `${section}:${word}`;
 }
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function WordPracticeSection({
   examples,
@@ -128,22 +164,61 @@ export default function WordPracticeSection({
   highlight,
   heroBg,
   heroText,
+  skillId,
+  skillStatus,
+  warmup,
+  introduction,
 }: Props) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completionStatus, setCompletionStatus] = useState<Map<string, WordStatus>>(new Map());
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [localStatus, setLocalStatus] = useState(skillStatus);
 
-  // Build flat word array
-  const allWords: WordEntry[] = [
-    ...examples.map((w, i) => ({ word: w, section: "examples" as const, sectionIndex: i })),
-    ...wordList.map((w, i) => ({ word: w, section: "wordList" as const, sectionIndex: i })),
-    ...dictationWords.map((w, i) => ({ word: w, section: "dictation" as const, sectionIndex: i })),
-  ];
+  // Build single flat word list deduplicated across sections
+  const allWords = useMemo<WordEntry[]>(() => {
+    const seen = new Set<string>();
+    const words: WordEntry[] = [];
+    const sections: Array<[string[], WordEntry["section"]]> = [
+      [examples, "examples"],
+      [wordList, "wordList"],
+      [dictationWords, "dictation"],
+    ];
+    for (const [arr, section] of sections) {
+      arr.forEach((w, i) => {
+        if (!seen.has(w.toLowerCase())) {
+          seen.add(w.toLowerCase());
+          words.push({ word: w, section, sectionIndex: i });
+        }
+      });
+    }
+    return words;
+  }, [examples, wordList, dictationWords]);
+
+  // Lookup: "section:word" → index in allWords
+  const wordIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    allWords.forEach((entry, idx) => map.set(`${entry.section}:${entry.word}`, idx));
+    return map;
+  }, [allWords]);
+
+  const exampleEntries = useMemo(() => allWords.filter(e => e.section === "examples"), [allWords]);
+  const wordListEntries = useMemo(() => allWords.filter(e => e.section === "wordList"), [allWords]);
+  const dictationEntries = useMemo(() => allWords.filter(e => e.section === "dictation"), [allWords]);
 
   const openModal = useCallback((index: number) => {
     setCurrentIndex(index);
     setModalOpen(true);
-  }, []);
+    // Mark as in_progress when first interaction if not already tracked
+    if (localStatus === "not_started") {
+      setLocalStatus("in_progress");
+      startTransition(() => {
+        updateSkillStatus(skillId, "in_progress");
+      });
+    }
+  }, [localStatus, skillId, startTransition]);
 
   const handleStatusChange = useCallback((key: string, status: WordStatus | null) => {
     setCompletionStatus((prev) => {
@@ -154,78 +229,118 @@ export default function WordPracticeSection({
     });
   }, []);
 
-  // Track offset for each section in the flat array
-  const examplesOffset = 0;
-  const wordListOffset = examples.length;
-  const dictationOffset = examples.length + wordList.length;
+  const handleFinish = useCallback(() => {
+    setModalOpen(false);
+    setShowConfetti(true);
+    playVictorySound();
+    startTransition(() => {
+      updateSkillStatus(skillId, "mastered");
+    });
+    setTimeout(() => {
+      router.push("/phonics");
+    }, 2800);
+  }, [skillId, router, startTransition]);
+
+  const hasLessonContent = warmup || introduction || wordListEntries.length > 0 || dictationEntries.length > 0;
 
   return (
     <>
-      {/* Example words */}
-      {examples.length > 0 && (
+      {showConfetti && <ConfettiCanvas />}
+
+      {/* Example words at top */}
+      {exampleEntries.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {examples.map((w, i) => (
+          {exampleEntries.map((entry) => (
             <InteractiveWordChip
-              key={w}
-              word={w}
+              key={entry.word}
+              word={entry.word}
               highlight={highlight}
-              status={completionStatus.get(statusKey("examples", w))}
-              onClick={() => openModal(examplesOffset + i)}
+              status={completionStatus.get(sKey("examples", entry.word))}
+              onClick={() => openModal(wordIndexMap.get(`examples:${entry.word}`) ?? 0)}
             />
           ))}
         </div>
       )}
 
-      {/* Practice word list — inside the lesson plan card */}
-      {wordList.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg" aria-hidden="true">🗂️</span>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              Minutes 9–12 · Practice Word List ({wordList.length} words)
-            </h3>
-          </div>
-          <div className="flex flex-wrap gap-2 pl-7">
-            {wordList.map((w, i) => (
-              <InteractiveWordChip
-                key={w}
-                word={w}
-                highlight={highlight}
-                status={completionStatus.get(statusKey("wordList", w))}
-                onClick={() => openModal(wordListOffset + i)}
-              />
-            ))}
-          </div>
-        </section>
+      {/* Lesson plan card */}
+      {hasLessonContent && (
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5 space-y-5">
+          <h2 className="font-semibold text-indigo-900 text-base">📋 Today&apos;s Lesson Plan</h2>
+
+          {warmup && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg" aria-hidden="true">🎤</span>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  Minutes 1–3 · Warm-up
+                </h3>
+              </div>
+              <p className="text-sm text-gray-800 leading-relaxed pl-7">{warmup}</p>
+            </section>
+          )}
+
+          {introduction && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg" aria-hidden="true">💡</span>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  Minutes 4–8 · Introduction
+                </h3>
+              </div>
+              <p className="text-sm text-gray-800 leading-relaxed pl-7">{introduction}</p>
+            </section>
+          )}
+
+          {wordListEntries.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg" aria-hidden="true">🗂️</span>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  Minutes 9–12 · Practice Word List ({wordListEntries.length} words)
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-2 pl-7">
+                {wordListEntries.map((entry) => (
+                  <InteractiveWordChip
+                    key={entry.word}
+                    word={entry.word}
+                    highlight={highlight}
+                    status={completionStatus.get(sKey("wordList", entry.word))}
+                    onClick={() => openModal(wordIndexMap.get(`wordList:${entry.word}`) ?? 0)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {dictationEntries.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg" aria-hidden="true">✏️</span>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  Minutes 13–15 · Dictation
+                </h3>
+              </div>
+              <p className="text-xs text-indigo-600 mb-3 pl-7">
+                Say each word clearly — she writes it without seeing it, then check together.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-7">
+                {dictationEntries.map((entry, i) => (
+                  <InteractiveDictationCard
+                    key={entry.word}
+                    word={entry.word}
+                    index={i}
+                    status={completionStatus.get(sKey("dictation", entry.word))}
+                    onClick={() => openModal(wordIndexMap.get(`dictation:${entry.word}`) ?? 0)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       )}
 
-      {/* Dictation words */}
-      {dictationWords.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg" aria-hidden="true">✏️</span>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              Minutes 13–15 · Dictation
-            </h3>
-          </div>
-          <p className="text-xs text-indigo-600 mb-3 pl-7">
-            Say each word clearly — she writes it without seeing it, then check together.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-7">
-            {dictationWords.map((w, i) => (
-              <InteractiveDictationCard
-                key={w}
-                word={w}
-                index={i}
-                status={completionStatus.get(statusKey("dictation", w))}
-                onClick={() => openModal(dictationOffset + i)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Modal */}
+      {/* Shared modal for all words */}
       {modalOpen && (
         <WordModal
           words={allWords}
@@ -237,6 +352,7 @@ export default function WordPracticeSection({
           heroText={heroText}
           completionStatus={completionStatus}
           onStatusChange={handleStatusChange}
+          onFinish={handleFinish}
         />
       )}
     </>
