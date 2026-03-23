@@ -47,6 +47,43 @@ export async function setActiveChild(childId: string) {
   revalidatePath("/");
 }
 
+export async function clearChildData(
+  childId: string,
+  options: {
+    progress: boolean;
+    sessions: boolean;
+    assessments: boolean;
+    books: boolean;
+  }
+) {
+  const db = getDb();
+  if (options.progress) {
+    await db.delete(childSkillProgress).where(eq(childSkillProgress.childId, childId));
+  }
+  if (options.sessions) {
+    await db.delete(sessions).where(eq(sessions.childId, childId));
+  }
+  if (options.assessments) {
+    await db.delete(assessments).where(eq(assessments.childId, childId));
+  }
+  if (options.books) {
+    await db.delete(books).where(eq(books.childId, childId));
+  }
+  revalidatePath("/", "layout");
+  revalidatePath("/phonics", "layout");
+  revalidatePath("/assessments");
+  revalidatePath("/sessions");
+  revalidatePath("/books");
+}
+
+export async function deleteAssessment(id: number, childId: string) {
+  await getDb()
+    .delete(assessments)
+    .where(and(eq(assessments.id, id), eq(assessments.childId, childId)));
+  revalidatePath("/assessments");
+  revalidatePath("/");
+}
+
 export async function getChildrenByIds(ids: string[]) {
   if (ids.length === 0) return [];
   return getDb()
