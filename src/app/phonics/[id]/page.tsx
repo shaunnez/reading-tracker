@@ -5,6 +5,74 @@ import Link from "next/link";
 import { getSkillById, getResources } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 
+// ─── Phoneme visual data ──────────────────────────────────────────────────────
+// Each skill gets: letters shown large, sound notation, emoji anchor, keyword,
+// hero background colour classes, and an optional highlight regex string for
+// colouring the target pattern inside word-list chips.
+const PHONEME_VISUAL: Record<number, {
+  letters: string;
+  sound: string;
+  emoji: string;
+  keyword: string;
+  heroBg: string;
+  heroText: string;
+  highlight?: string; // regex alternation string, e.g. "sh" or "ai|ay"
+}> = {
+  // Phase 1 – CVC & sight words
+  1:  { letters: "a",       sound: "/a/",   emoji: "🍎", keyword: "apple",    heroBg: "bg-red-50",     heroText: "text-red-600",    highlight: "a" },
+  2:  { letters: "i",       sound: "/i/",   emoji: "🦔", keyword: "itch",     heroBg: "bg-yellow-50",  heroText: "text-yellow-600", highlight: "i" },
+  3:  { letters: "o",       sound: "/o/",   emoji: "🐙", keyword: "octopus",  heroBg: "bg-orange-50",  heroText: "text-orange-600", highlight: "o" },
+  4:  { letters: "u",       sound: "/u/",   emoji: "☂️",  keyword: "umbrella", heroBg: "bg-purple-50",  heroText: "text-purple-600", highlight: "u" },
+  5:  { letters: "e",       sound: "/e/",   emoji: "🥚", keyword: "egg",      heroBg: "bg-green-50",   heroText: "text-green-700",  highlight: "e" },
+  6:  { letters: "a i o u e", sound: "short vowels", emoji: "🎯", keyword: "review", heroBg: "bg-blue-50", heroText: "text-blue-700" },
+  7:  { letters: "abc…",    sound: "sentences", emoji: "📖", keyword: "reading", heroBg: "bg-indigo-50", heroText: "text-indigo-700" },
+  8:  { letters: "sight",   sound: "words", emoji: "👁️",  keyword: "the, a, is", heroBg: "bg-slate-50", heroText: "text-slate-700" },
+  9:  { letters: "sight",   sound: "words", emoji: "🔤", keyword: "said, was", heroBg: "bg-slate-50",   heroText: "text-slate-700" },
+  // Phase 2 – Digraphs & Blends
+  10: { letters: "sh",      sound: "/sh/",  emoji: "🤫", keyword: "shush",    heroBg: "bg-violet-50",  heroText: "text-violet-700", highlight: "sh" },
+  11: { letters: "ch",      sound: "/ch/",  emoji: "🧀", keyword: "cheese",   heroBg: "bg-amber-50",   heroText: "text-amber-700",  highlight: "ch" },
+  12: { letters: "th",      sound: "/th/",  emoji: "🤔", keyword: "think",    heroBg: "bg-teal-50",    heroText: "text-teal-700",   highlight: "th" },
+  13: { letters: "wh",      sound: "/w/",   emoji: "🐳", keyword: "whale",    heroBg: "bg-cyan-50",    heroText: "text-cyan-700",   highlight: "wh" },
+  14: { letters: "ck",      sound: "/k/",   emoji: "🦆", keyword: "duck",     heroBg: "bg-sky-50",     heroText: "text-sky-700",    highlight: "ck" },
+  15: { letters: "bl cl fl gl pl sl", sound: "L-blends", emoji: "🔵", keyword: "blue", heroBg: "bg-blue-50", heroText: "text-blue-700" },
+  16: { letters: "br cr dr fr gr tr", sound: "R-blends", emoji: "🐸", keyword: "frog", heroBg: "bg-emerald-50", heroText: "text-emerald-700" },
+  17: { letters: "st sp sn sm sc sk sw", sound: "S-blends", emoji: "⭐", keyword: "stop", heroBg: "bg-yellow-50", heroText: "text-yellow-700" },
+  18: { letters: "-nd -nk -nt -mp -st", sound: "final blends", emoji: "🏖️", keyword: "sand", heroBg: "bg-orange-50", heroText: "text-orange-700" },
+  19: { letters: "blends+",  sound: "complex blends", emoji: "🔗", keyword: "crisp", heroBg: "bg-rose-50", heroText: "text-rose-700" },
+  20: { letters: "sight",   sound: "words", emoji: "📝", keyword: "have, come", heroBg: "bg-slate-50", heroText: "text-slate-700" },
+  // Phase 3 – Long vowels & vowel teams
+  21: { letters: "a_e",     sound: "/eɪ/",  emoji: "🎂", keyword: "cake",     heroBg: "bg-pink-50",    heroText: "text-pink-700" },
+  22: { letters: "i_e",     sound: "/aɪ/",  emoji: "🪁", keyword: "kite",     heroBg: "bg-indigo-50",  heroText: "text-indigo-700" },
+  23: { letters: "o_e",     sound: "/oʊ/",  emoji: "🏠", keyword: "home",     heroBg: "bg-emerald-50", heroText: "text-emerald-700" },
+  24: { letters: "u_e",     sound: "/juː/", emoji: "🎲", keyword: "cube",     heroBg: "bg-purple-50",  heroText: "text-purple-700" },
+  25: { letters: "ee",      sound: "/iː/",  emoji: "🦶", keyword: "feet",     heroBg: "bg-lime-50",    heroText: "text-lime-700",   highlight: "ee" },
+  26: { letters: "ea",      sound: "/iː/",  emoji: "🌿", keyword: "leaf",     heroBg: "bg-green-50",   heroText: "text-green-700",  highlight: "ea" },
+  27: { letters: "ai  ay",  sound: "/eɪ/",  emoji: "🌧️", keyword: "rain",     heroBg: "bg-blue-50",    heroText: "text-blue-700",   highlight: "ai|ay" },
+  28: { letters: "oa  ow",  sound: "/oʊ/",  emoji: "⛵", keyword: "boat",     heroBg: "bg-sky-50",     heroText: "text-sky-700",    highlight: "oa|ow" },
+  29: { letters: "oo",      sound: "/uː/",  emoji: "🌙", keyword: "moon",     heroBg: "bg-violet-50",  heroText: "text-violet-700", highlight: "oo" },
+  30: { letters: "ar",      sound: "/ɑr/",  emoji: "🚗", keyword: "car",      heroBg: "bg-red-50",     heroText: "text-red-700",    highlight: "ar" },
+  31: { letters: "or",      sound: "/ɔr/",  emoji: "🌽", keyword: "corn",     heroBg: "bg-amber-50",   heroText: "text-amber-700",  highlight: "or" },
+  32: { letters: "er ir ur", sound: "/ɜr/", emoji: "🐦", keyword: "bird",     heroBg: "bg-teal-50",    heroText: "text-teal-700",   highlight: "er|ir|ur" },
+  // Phase 4 – Advanced patterns
+  33: { letters: "oi  oy",  sound: "/ɔɪ/",  emoji: "🛢️", keyword: "oil",      heroBg: "bg-yellow-50",  heroText: "text-yellow-700", highlight: "oi|oy" },
+  34: { letters: "ou  ow",  sound: "/aʊ/",  emoji: "☁️", keyword: "cloud",    heroBg: "bg-slate-50",   heroText: "text-slate-700",  highlight: "ou|ow" },
+  35: { letters: "oo",      sound: "/ʊ/",   emoji: "📚", keyword: "book",     heroBg: "bg-orange-50",  heroText: "text-orange-700", highlight: "oo" },
+  36: { letters: "au  aw",  sound: "/ɔː/",  emoji: "🦀", keyword: "claw",     heroBg: "bg-amber-50",   heroText: "text-amber-700",  highlight: "au|aw" },
+  37: { letters: "c  g",    sound: "/s/ /dʒ/", emoji: "🏙️", keyword: "city",  heroBg: "bg-gray-50",    heroText: "text-gray-700" },
+  38: { letters: "VC·CV",   sound: "closed syllable", emoji: "🐇", keyword: "rabbit", heroBg: "bg-rose-50", heroText: "text-rose-700" },
+  39: { letters: "V·CV",    sound: "open syllable", emoji: "🎵", keyword: "music", heroBg: "bg-indigo-50", heroText: "text-indigo-700" },
+  40: { letters: "VCe",     sound: "in long words", emoji: "👗", keyword: "costume", heroBg: "bg-pink-50", heroText: "text-pink-700" },
+  41: { letters: "vowel teams+", sound: "in syllables", emoji: "🎈", keyword: "explain", heroBg: "bg-sky-50", heroText: "text-sky-700" },
+  42: { letters: "r-controlled+", sound: "in syllables", emoji: "👨‍🌾", keyword: "farmer", heroBg: "bg-green-50", heroText: "text-green-700" },
+  43: { letters: "un-",     sound: "prefix",  emoji: "🔓", keyword: "unlock",  heroBg: "bg-blue-50",    heroText: "text-blue-700",   highlight: "^un" },
+  44: { letters: "re-",     sound: "prefix",  emoji: "🔄", keyword: "redo",    heroBg: "bg-cyan-50",    heroText: "text-cyan-700",   highlight: "^re" },
+  45: { letters: "-ing",    sound: "suffix",  emoji: "🏃", keyword: "running", heroBg: "bg-emerald-50", heroText: "text-emerald-700",highlight: "ing$" },
+  46: { letters: "-ed",     sound: "suffix",  emoji: "⬆️", keyword: "jumped",  heroBg: "bg-violet-50",  heroText: "text-violet-700", highlight: "ed$" },
+  47: { letters: "-ful -ly -tion", sound: "suffixes", emoji: "🌟", keyword: "helpful", heroBg: "bg-amber-50", heroText: "text-amber-700" },
+  48: { letters: "pre·fix·suf·fix", sound: "big words", emoji: "🦋", keyword: "butterfly", heroBg: "bg-rose-50", heroText: "text-rose-700" },
+};
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 const PHASE_LABELS: Record<number, string> = {
   1: "Phase 1 — Foundation (Months 1–3)",
   2: "Phase 2 — Consolidation (Months 4–6)",
@@ -24,6 +92,33 @@ const STATUS_LABELS: Record<string, string> = {
   mastered: "Mastered ✓",
 };
 
+// ─── Word chip with highlighted target phoneme ────────────────────────────────
+function WordChip({ word, highlight }: { word: string; highlight?: string }) {
+  if (!highlight) {
+    return (
+      <span className="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg font-mono text-sm text-gray-800">
+        {word}
+      </span>
+    );
+  }
+  const regex = new RegExp(`(${highlight})`, "i");
+  const parts = word.split(regex);
+  return (
+    <span className="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg font-mono text-sm text-gray-800">
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <span key={i} className="text-indigo-600 font-bold underline decoration-indigo-300">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </span>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 type Props = { params: Promise<{ id: string }> };
 
 export default async function LessonPage({ params }: Props) {
@@ -39,8 +134,10 @@ export default async function LessonPage({ params }: Props) {
     : [];
   const examples = skill.examples ? skill.examples.split(",").map((w) => w.trim()) : [];
 
+  const visual = PHONEME_VISUAL[skill.sequenceOrder];
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-8">
       {/* Back nav */}
       <Link href="/phonics" className="text-sm text-indigo-600 hover:underline">
         ← Back to Phonics Map
@@ -58,52 +155,80 @@ export default async function LessonPage({ params }: Props) {
         <p className="text-sm text-gray-500 mt-1">{PHASE_LABELS[skill.phase]}</p>
       </div>
 
+      {/* ── Hero phoneme card ─────────────────────────────────── */}
+      {visual && (
+        <div className={`rounded-2xl border-2 ${visual.heroBg} p-6 flex items-center gap-6`}>
+          {/* Emoji anchor */}
+          <div className="text-6xl leading-none shrink-0 select-none" aria-hidden="true">
+            {visual.emoji}
+          </div>
+
+          {/* Letter(s) + sound + keyword */}
+          <div className="min-w-0">
+            <div className={`font-black leading-none tracking-tight mb-1 ${visual.heroText}`}
+              style={{ fontSize: "clamp(2.5rem, 10vw, 4rem)" }}>
+              {visual.letters}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span className="font-mono text-sm bg-white/80 rounded-full px-2.5 py-0.5 text-gray-700 border">
+                {visual.sound}
+              </span>
+              <span className="text-sm text-gray-600 font-medium">
+                as in <span className="font-bold">&ldquo;{visual.keyword}&rdquo;</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Example words */}
       {examples.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {examples.map((w) => (
-            <span key={w} className="px-2 py-1 bg-gray-100 rounded font-mono text-sm">
-              {w}
-            </span>
+            <WordChip key={w} word={w} highlight={visual?.highlight} />
           ))}
         </div>
       )}
 
-      {/* Session plan */}
+      {/* ── Session plan ─────────────────────────────────────── */}
       <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5 space-y-5">
-        <h2 className="font-semibold text-indigo-900">Today&apos;s Lesson Plan</h2>
+        <h2 className="font-semibold text-indigo-900 text-base">📋 Today&apos;s Lesson Plan</h2>
 
         {skill.warmup && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">
-              Minutes 1–3 · Warm-up
-            </h3>
-            <p className="text-sm text-gray-800 leading-relaxed">{skill.warmup}</p>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg" aria-hidden="true">🎤</span>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                Minutes 1–3 · Warm-up
+              </h3>
+            </div>
+            <p className="text-sm text-gray-800 leading-relaxed pl-7">{skill.warmup}</p>
           </section>
         )}
 
         {skill.introduction && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">
-              Minutes 4–8 · Introduction
-            </h3>
-            <p className="text-sm text-gray-800 leading-relaxed">{skill.introduction}</p>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg" aria-hidden="true">💡</span>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                Minutes 4–8 · Introduction
+              </h3>
+            </div>
+            <p className="text-sm text-gray-800 leading-relaxed pl-7">{skill.introduction}</p>
           </section>
         )}
 
         {wordList.length > 0 && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">
-              Minutes 9–12 · Practice Word List ({wordList.length} words)
-            </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg" aria-hidden="true">🗂️</span>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                Minutes 9–12 · Practice Word List ({wordList.length} words)
+              </h3>
+            </div>
+            <div className="flex flex-wrap gap-2 pl-7">
               {wordList.map((w) => (
-                <span
-                  key={w}
-                  className="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg font-mono text-sm text-gray-800"
-                >
-                  {w}
-                </span>
+                <WordChip key={w} word={w} highlight={visual?.highlight} />
               ))}
             </div>
           </section>
@@ -111,17 +236,23 @@ export default async function LessonPage({ params }: Props) {
 
         {dictationWords.length > 0 && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">
-              Minutes 13–15 · Dictation (you say, she writes)
-            </h3>
-            <p className="text-xs text-gray-500 mb-2">
-              Say each word clearly. She writes it without seeing it. Then show her and discuss any errors.
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg" aria-hidden="true">✏️</span>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                Minutes 13–15 · Dictation
+              </h3>
+            </div>
+            <p className="text-xs text-indigo-600 mb-3 pl-7">
+              Say each word clearly — she writes it without seeing it, then check together.
             </p>
-            <div className="flex gap-3 flex-wrap">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-7">
               {dictationWords.map((w, i) => (
-                <span key={w} className="px-3 py-2 bg-white border border-dashed border-indigo-300 rounded-lg font-mono text-sm font-medium">
-                  {i + 1}. {w}
-                </span>
+                <div key={w} className="bg-white rounded-xl border-2 border-dashed border-indigo-300 p-3 text-center">
+                  <div className="text-xs text-indigo-400 font-medium mb-1">Word {i + 1}</div>
+                  <div className="font-mono text-sm font-semibold text-gray-800">{w}</div>
+                  {/* Writing line */}
+                  <div className="mt-2 border-b-2 border-indigo-200 mx-2" />
+                </div>
               ))}
             </div>
           </section>
@@ -131,17 +262,20 @@ export default async function LessonPage({ params }: Props) {
       {/* Tips for parents */}
       {skill.tipsForParents && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">
-            Parent Notes
-          </h3>
-          <p className="text-sm text-amber-900 leading-relaxed">{skill.tipsForParents}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg" aria-hidden="true">💛</span>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+              Parent Notes
+            </h3>
+          </div>
+          <p className="text-sm text-amber-900 leading-relaxed pl-7">{skill.tipsForParents}</p>
         </div>
       )}
 
       {/* Related resources */}
       {matchingResources.length > 0 && (
         <div>
-          <h2 className="font-semibold text-gray-900 mb-3">Matching Books &amp; Resources</h2>
+          <h2 className="font-semibold text-gray-900 mb-3">📎 Matching Books &amp; Resources</h2>
           <div className="space-y-2">
             {matchingResources.map((r) => (
               <a
@@ -175,9 +309,10 @@ export default async function LessonPage({ params }: Props) {
         </div>
       )}
 
-      {/* Footer: decodable reading reminder */}
+      {/* Footer */}
       <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-600">
-        <strong>After word practice:</strong> Read a decodable book that matches this skill level. Aim for 95%+ accuracy. End with a quick comprehension question: &quot;What was that about? What was your favourite part?&quot;
+        <strong>After word practice:</strong> Read a decodable book that matches this skill level.
+        Aim for 95%+ accuracy. End with: &quot;What was that about? What was your favourite part?&quot;
       </div>
     </div>
   );
