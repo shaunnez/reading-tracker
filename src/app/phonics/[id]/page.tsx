@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSkillById, getResources } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
+import WordPracticeSection from "./word-practice-section";
 
 // ─── Phoneme visual data ──────────────────────────────────────────────────────
 // Each skill gets: letters shown large, sound notation, emoji anchor, keyword,
@@ -181,14 +182,15 @@ export default async function LessonPage({ params }: Props) {
         </div>
       )}
 
-      {/* Example words */}
-      {examples.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {examples.map((w) => (
-            <WordChip key={w} word={w} highlight={visual?.highlight} />
-          ))}
-        </div>
-      )}
+      {/* Example words — interactive, clickable to open modal */}
+      <WordPracticeSection
+        examples={examples}
+        wordList={[]}
+        dictationWords={[]}
+        highlight={visual?.highlight}
+        heroBg={visual?.heroBg ?? "bg-gray-50"}
+        heroText={visual?.heroText ?? "text-gray-700"}
+      />
 
       {/* ── Session plan ─────────────────────────────────────── */}
       <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5 space-y-5">
@@ -218,45 +220,15 @@ export default async function LessonPage({ params }: Props) {
           </section>
         )}
 
-        {wordList.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg" aria-hidden="true">🗂️</span>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                Minutes 9–12 · Practice Word List ({wordList.length} words)
-              </h3>
-            </div>
-            <div className="flex flex-wrap gap-2 pl-7">
-              {wordList.map((w) => (
-                <WordChip key={w} word={w} highlight={visual?.highlight} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {dictationWords.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg" aria-hidden="true">✏️</span>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                Minutes 13–15 · Dictation
-              </h3>
-            </div>
-            <p className="text-xs text-indigo-600 mb-3 pl-7">
-              Say each word clearly — she writes it without seeing it, then check together.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-7">
-              {dictationWords.map((w, i) => (
-                <div key={w} className="bg-white rounded-xl border-2 border-dashed border-indigo-300 p-3 text-center">
-                  <div className="text-xs text-indigo-400 font-medium mb-1">Word {i + 1}</div>
-                  <div className="font-mono text-sm font-semibold text-gray-800">{w}</div>
-                  {/* Writing line */}
-                  <div className="mt-2 border-b-2 border-indigo-200 mx-2" />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Practice word list + dictation — interactive client component */}
+        <WordPracticeSection
+          examples={[]}
+          wordList={wordList}
+          dictationWords={dictationWords}
+          highlight={visual?.highlight}
+          heroBg={visual?.heroBg ?? "bg-gray-50"}
+          heroText={visual?.heroText ?? "text-gray-700"}
+        />
       </div>
 
       {/* Tips for parents */}
