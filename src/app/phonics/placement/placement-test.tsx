@@ -12,7 +12,7 @@ type Skill = {
   id: number;
   name: string;
   sequenceOrder: number;
-  phase: number;
+  stage: string;
   examples: string | null;
   wordList: string | null;
   category: string;
@@ -21,17 +21,24 @@ type Skill = {
 type CompletedRound = {
   skillSeq: number;
   skillName: string;
-  phase: number;
+  stage: string;
   correct: number;
   total: number;
   passed: boolean;
 };
 
-const PHASE_LABELS: Record<number, string> = {
-  1: "Phase 1 · Foundation",
-  2: "Phase 2 · Consolidation",
-  3: "Phase 3 · Expansion",
-  4: "Phase 4 · Independence",
+const STAGE_LABELS: Record<string, string> = {
+  "1": "Stage 1 · Foundation",
+  "2": "Stage 2 · Early Consonants",
+  "3": "Stage 3 · More Consonants",
+  "4": "Stage 4 · Completing the Alphabet",
+  "4+": "Stage 4+ · Double Letters",
+  "5": "Stage 5 · Consonant Blends",
+  "6": "Stage 6 · Digraphs",
+  "7.1": "Stage 7 Unit 1 · Long Vowel Teams",
+  "7.2": "Stage 7 Unit 2 · R-controlled",
+  "7.3": "Stage 7 Unit 3 · Diphthongs",
+  "7.4": "Stage 7 Unit 4 · Split Digraphs",
 };
 
 // ─── Word extraction ──────────────────────────────────────────────────────────
@@ -122,7 +129,7 @@ function WordCard({
   wordIndex,
   totalWords,
   skillName,
-  phase,
+  stage,
   roundNum,
   onScore,
 }: {
@@ -130,7 +137,7 @@ function WordCard({
   wordIndex: number;
   totalWords: number;
   skillName: string;
-  phase: number;
+  stage: string;
   roundNum: number;
   onScore: (correct: boolean) => void;
 }) {
@@ -139,7 +146,7 @@ function WordCard({
       {/* Context header */}
       <div className="text-center w-full">
         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-          Round {roundNum} · {PHASE_LABELS[phase]}
+          Round {roundNum} · {STAGE_LABELS[stage]}
         </p>
         <p className="text-sm text-gray-500 mt-0.5 truncate max-w-xs mx-auto">{skillName}</p>
       </div>
@@ -213,7 +220,7 @@ function ResultsScreen({
   applied: boolean;
 }) {
   const router = useRouter();
-  const allMastered = recommendedSeq > 48;
+  const allMastered = recommendedSeq > 63;
 
   return (
     <div className="space-y-6 py-4">
@@ -222,7 +229,7 @@ function ResultsScreen({
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Test Complete!</h2>
         {allMastered ? (
           <p className="text-gray-500 text-sm">
-            Incredible — your child has mastered all 48 phonics skills!
+            Incredible — your child has mastered all 63 phonics skills!
           </p>
         ) : recommendedSeq <= 1 ? (
           <p className="text-gray-500 text-sm">
@@ -245,7 +252,7 @@ function ResultsScreen({
             Skill #{recommendedSeq} · {recommendedSkill.name}
           </p>
           <p className="text-sm text-indigo-600 mt-0.5">
-            {PHASE_LABELS[recommendedSkill.phase]}
+            {STAGE_LABELS[recommendedSkill.stage]}
           </p>
           {recommendedSeq > 1 && (
             <p className="mt-3 text-sm text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
@@ -268,7 +275,7 @@ function ResultsScreen({
             <div className="min-w-0">
               <span className="text-gray-400 text-xs mr-1">#{r.skillSeq}</span>
               <span className="text-gray-700 truncate">{r.skillName}</span>
-              <span className="text-gray-400 text-xs ml-2">· {PHASE_LABELS[r.phase]}</span>
+              <span className="text-gray-400 text-xs ml-2">· {STAGE_LABELS[r.stage]}</span>
             </div>
             <span
               className={`font-medium ml-3 shrink-0 ${r.passed ? "text-green-600" : "text-red-500"}`}
@@ -352,7 +359,7 @@ export default function PlacementTest({ skills, childId }: { skills: Skill[]; ch
     const completedRound: CompletedRound = {
       skillSeq: currentSkill.sequenceOrder,
       skillName: currentSkill.name,
-      phase: currentSkill.phase,
+      stage: currentSkill.stage,
       correct: correctCount,
       total: newScores.length,
       passed,
@@ -379,7 +386,7 @@ export default function PlacementTest({ skills, childId }: { skills: Skill[]; ch
   };
 
   const handleApply = () => {
-    const seq = Math.max(1, Math.min(recommendedSeq, 48));
+    const seq = Math.max(1, Math.min(recommendedSeq, 63));
     startTransition(async () => {
       await applyPlacementResult(seq, childId);
       setApplied(true);
@@ -421,7 +428,7 @@ export default function PlacementTest({ skills, childId }: { skills: Skill[]; ch
       wordIndex={wordIndex}
       totalWords={currentWords.length}
       skillName={currentSkill.name}
-      phase={currentSkill.phase}
+      stage={currentSkill.stage}
       roundNum={rounds.length + 1}
       onScore={handleScore}
     />

@@ -8,12 +8,13 @@ type ChildEntry = { id: string; name: string };
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
-  { href: "/sessions/new", label: "Log Session" },
   { href: "/phonics", label: "Phonics Map" },
+  { href: "/sessions/new", label: "Log Session" },
+  { href: "/assessments", label: "Assessments" },
   { href: "/progress", label: "Progress" },
   { href: "/books", label: "Books" },
-  { href: "/assessments", label: "Assessments" },
   { href: "/children", label: "Children" },
+
 ];
 
 export default function NavBar({ activeChildId }: { activeChildId: string | null }) {

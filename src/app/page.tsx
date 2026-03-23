@@ -6,8 +6,23 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import NoChildBanner from "@/components/no-child-banner";
 
-const PHASE_LABELS = ["", "Months 1-3: Foundation", "Months 4-6: Consolidation", "Months 7-9: Expansion", "Months 10-12: Independence"];
-const WCPM_TARGETS = [0, 30, 70, 85, 90]; // end-of-phase targets
+const STAGE_LABELS: Record<string, string> = {
+  "1": "Stage 1 · Foundation",
+  "2": "Stage 2 · Early Consonants",
+  "3": "Stage 3 · More Consonants",
+  "4": "Stage 4 · Completing the Alphabet",
+  "4+": "Stage 4+ · Double Letters & Plurals",
+  "5": "Stage 5 · Consonant Blends",
+  "6": "Stage 6 · Digraphs",
+  "7.1": "Stage 7 Unit 1 · Long Vowel Teams",
+  "7.2": "Stage 7 Unit 2 · R-controlled Vowels",
+  "7.3": "Stage 7 Unit 3 · Diphthongs",
+  "7.4": "Stage 7 Unit 4 · Split Digraphs",
+};
+const WCPM_TARGETS: Record<string, number> = {
+  "1": 10, "2": 20, "3": 30, "4": 40, "4+": 45,
+  "5": 55, "6": 65, "7.1": 75, "7.2": 85, "7.3": 90, "7.4": 100,
+};
 
 export default async function DashboardPage() {
   const childId = await getActiveChildId();
@@ -43,7 +58,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reading Tracker</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {PHASE_LABELS[stats.currentPhase]} · {stats.mastered} of {stats.total} skills mastered
+            {STAGE_LABELS[stats.currentStage]} · {stats.mastered} of {stats.total} skills mastered
           </p>
         </div>
         <Link
@@ -73,8 +88,8 @@ export default async function DashboardPage() {
           icon="📖"
         />
         <StatCard
-          label="Current Phase"
-          value={`Phase ${stats.currentPhase}`}
+          label="Current Stage"
+          value={`Stage ${stats.currentStage}`}
           icon="📍"
         />
       </div>
@@ -82,7 +97,7 @@ export default async function DashboardPage() {
       {/* Overall progress */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">12-Month Progress</CardTitle>
+          <CardTitle className="text-base">Phonics Progress</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex justify-between text-sm text-gray-600">
@@ -91,10 +106,10 @@ export default async function DashboardPage() {
           </div>
           <Progress value={progressPct} className="h-3" />
           <div className="flex justify-between text-xs text-gray-400">
-            <span>Foundation</span>
-            <span>Consolidation</span>
-            <span>Expansion</span>
-            <span>Independence</span>
+            <span>Stage 1</span>
+            <span>Stage 4</span>
+            <span>Stage 6</span>
+            <span>Stage 7.4</span>
           </div>
         </CardContent>
       </Card>
@@ -171,9 +186,9 @@ export default async function DashboardPage() {
       <Card className="bg-indigo-50 border-indigo-100">
         <CardContent className="pt-4">
           <p className="text-sm text-indigo-800">
-            <strong>Phase {stats.currentPhase} target:</strong> {WCPM_TARGETS[stats.currentPhase]} words per minute · {" "}
+            <strong>Stage {stats.currentStage} target:</strong> {WCPM_TARGETS[stats.currentStage]} words per minute · {" "}
             {stats.latestWcpm
-              ? `Current: ${stats.latestWcpm} wpm (${stats.latestWcpm >= WCPM_TARGETS[stats.currentPhase] ? "✅ On track" : "📈 Keep going"})`
+              ? `Current: ${stats.latestWcpm} wpm (${stats.latestWcpm >= WCPM_TARGETS[stats.currentStage] ? "✅ On track" : "📈 Keep going"})`
               : "No WPM assessment yet — add one in Assessments"}
           </p>
         </CardContent>

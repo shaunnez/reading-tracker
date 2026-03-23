@@ -21,66 +21,95 @@ const PHONEME_VISUAL: Record<number, {
   heroText: string;
   highlight?: string; // regex alternation string, e.g. "sh" or "ai|ay"
 }> = {
-  // Phase 1 – CVC & sight words
-  1:  { letters: "a",       sound: "/a/",   emoji: "🍎", keyword: "apple",    heroBg: "bg-red-50",     heroText: "text-red-600",    highlight: "a" },
-  2:  { letters: "i",       sound: "/i/",   emoji: "🦔", keyword: "itch",     heroBg: "bg-yellow-50",  heroText: "text-yellow-600", highlight: "i" },
-  3:  { letters: "o",       sound: "/o/",   emoji: "🐙", keyword: "octopus",  heroBg: "bg-orange-50",  heroText: "text-orange-600", highlight: "o" },
-  4:  { letters: "u",       sound: "/u/",   emoji: "☂️",  keyword: "umbrella", heroBg: "bg-purple-50",  heroText: "text-purple-600", highlight: "u" },
-  5:  { letters: "e",       sound: "/e/",   emoji: "🥚", keyword: "egg",      heroBg: "bg-green-50",   heroText: "text-green-700",  highlight: "e" },
-  6:  { letters: "a i o u e", sound: "short vowels", emoji: "🎯", keyword: "review", heroBg: "bg-blue-50", heroText: "text-blue-700" },
-  7:  { letters: "abc…",    sound: "sentences", emoji: "📖", keyword: "reading", heroBg: "bg-indigo-50", heroText: "text-indigo-700" },
-  8:  { letters: "sight",   sound: "words", emoji: "👁️",  keyword: "the, a, is", heroBg: "bg-slate-50", heroText: "text-slate-700" },
-  9:  { letters: "sight",   sound: "words", emoji: "🔤", keyword: "said, was", heroBg: "bg-slate-50",   heroText: "text-slate-700" },
-  // Phase 2 – Digraphs & Blends
-  10: { letters: "sh",      sound: "/sh/",  emoji: "🤫", keyword: "shush",    heroBg: "bg-violet-50",  heroText: "text-violet-700", highlight: "sh" },
-  11: { letters: "ch",      sound: "/ch/",  emoji: "🧀", keyword: "cheese",   heroBg: "bg-amber-50",   heroText: "text-amber-700",  highlight: "ch" },
-  12: { letters: "th",      sound: "/th/",  emoji: "🤔", keyword: "think",    heroBg: "bg-teal-50",    heroText: "text-teal-700",   highlight: "th" },
-  13: { letters: "wh",      sound: "/w/",   emoji: "🐳", keyword: "whale",    heroBg: "bg-cyan-50",    heroText: "text-cyan-700",   highlight: "wh" },
-  14: { letters: "ck",      sound: "/k/",   emoji: "🦆", keyword: "duck",     heroBg: "bg-sky-50",     heroText: "text-sky-700",    highlight: "ck" },
-  15: { letters: "bl cl fl gl pl sl", sound: "L-blends", emoji: "🔵", keyword: "blue", heroBg: "bg-blue-50", heroText: "text-blue-700" },
-  16: { letters: "br cr dr fr gr tr", sound: "R-blends", emoji: "🐸", keyword: "frog", heroBg: "bg-emerald-50", heroText: "text-emerald-700" },
-  17: { letters: "st sp sn sm sc sk sw", sound: "S-blends", emoji: "⭐", keyword: "stop", heroBg: "bg-yellow-50", heroText: "text-yellow-700" },
-  18: { letters: "-nd -nk -nt -mp -st", sound: "final blends", emoji: "🏖️", keyword: "sand", heroBg: "bg-orange-50", heroText: "text-orange-700" },
-  19: { letters: "blends+",  sound: "complex blends", emoji: "🔗", keyword: "crisp", heroBg: "bg-rose-50", heroText: "text-rose-700" },
-  20: { letters: "sight",   sound: "words", emoji: "📝", keyword: "have, come", heroBg: "bg-slate-50", heroText: "text-slate-700" },
-  // Phase 3 – Long vowels & vowel teams
-  21: { letters: "a_e",     sound: "/eɪ/",  emoji: "🎂", keyword: "cake",     heroBg: "bg-pink-50",    heroText: "text-pink-700" },
-  22: { letters: "i_e",     sound: "/aɪ/",  emoji: "🪁", keyword: "kite",     heroBg: "bg-indigo-50",  heroText: "text-indigo-700" },
-  23: { letters: "o_e",     sound: "/oʊ/",  emoji: "🏠", keyword: "home",     heroBg: "bg-emerald-50", heroText: "text-emerald-700" },
-  24: { letters: "u_e",     sound: "/juː/", emoji: "🎲", keyword: "cube",     heroBg: "bg-purple-50",  heroText: "text-purple-700" },
-  25: { letters: "ee",      sound: "/iː/",  emoji: "🦶", keyword: "feet",     heroBg: "bg-lime-50",    heroText: "text-lime-700",   highlight: "ee" },
-  26: { letters: "ea",      sound: "/iː/",  emoji: "🌿", keyword: "leaf",     heroBg: "bg-green-50",   heroText: "text-green-700",  highlight: "ea" },
-  27: { letters: "ai  ay",  sound: "/eɪ/",  emoji: "🌧️", keyword: "rain",     heroBg: "bg-blue-50",    heroText: "text-blue-700",   highlight: "ai|ay" },
-  28: { letters: "oa  ow",  sound: "/oʊ/",  emoji: "⛵", keyword: "boat",     heroBg: "bg-sky-50",     heroText: "text-sky-700",    highlight: "oa|ow" },
-  29: { letters: "oo",      sound: "/uː/",  emoji: "🌙", keyword: "moon",     heroBg: "bg-violet-50",  heroText: "text-violet-700", highlight: "oo" },
-  30: { letters: "ar",      sound: "/ɑr/",  emoji: "🚗", keyword: "car",      heroBg: "bg-red-50",     heroText: "text-red-700",    highlight: "ar" },
-  31: { letters: "or",      sound: "/ɔr/",  emoji: "🌽", keyword: "corn",     heroBg: "bg-amber-50",   heroText: "text-amber-700",  highlight: "or" },
-  32: { letters: "er ir ur", sound: "/ɜr/", emoji: "🐦", keyword: "bird",     heroBg: "bg-teal-50",    heroText: "text-teal-700",   highlight: "er|ir|ur" },
-  // Phase 4 – Advanced patterns
-  33: { letters: "oi  oy",  sound: "/ɔɪ/",  emoji: "🛢️", keyword: "oil",      heroBg: "bg-yellow-50",  heroText: "text-yellow-700", highlight: "oi|oy" },
-  34: { letters: "ou  ow",  sound: "/aʊ/",  emoji: "☁️", keyword: "cloud",    heroBg: "bg-slate-50",   heroText: "text-slate-700",  highlight: "ou|ow" },
-  35: { letters: "oo",      sound: "/ʊ/",   emoji: "📚", keyword: "book",     heroBg: "bg-orange-50",  heroText: "text-orange-700", highlight: "oo" },
-  36: { letters: "au  aw",  sound: "/ɔː/",  emoji: "🦀", keyword: "claw",     heroBg: "bg-amber-50",   heroText: "text-amber-700",  highlight: "au|aw" },
-  37: { letters: "c  g",    sound: "/s/ /dʒ/", emoji: "🏙️", keyword: "city",  heroBg: "bg-gray-50",    heroText: "text-gray-700" },
-  38: { letters: "VC·CV",   sound: "closed syllable", emoji: "🐇", keyword: "rabbit", heroBg: "bg-rose-50", heroText: "text-rose-700" },
-  39: { letters: "V·CV",    sound: "open syllable", emoji: "🎵", keyword: "music", heroBg: "bg-indigo-50", heroText: "text-indigo-700" },
-  40: { letters: "VCe",     sound: "in long words", emoji: "👗", keyword: "costume", heroBg: "bg-pink-50", heroText: "text-pink-700" },
-  41: { letters: "vowel teams+", sound: "in syllables", emoji: "🎈", keyword: "explain", heroBg: "bg-sky-50", heroText: "text-sky-700" },
-  42: { letters: "r-controlled+", sound: "in syllables", emoji: "👨‍🌾", keyword: "farmer", heroBg: "bg-green-50", heroText: "text-green-700" },
-  43: { letters: "un-",     sound: "prefix",  emoji: "🔓", keyword: "unlock",  heroBg: "bg-blue-50",    heroText: "text-blue-700",   highlight: "^un" },
-  44: { letters: "re-",     sound: "prefix",  emoji: "🔄", keyword: "redo",    heroBg: "bg-cyan-50",    heroText: "text-cyan-700",   highlight: "^re" },
-  45: { letters: "-ing",    sound: "suffix",  emoji: "🏃", keyword: "running", heroBg: "bg-emerald-50", heroText: "text-emerald-700",highlight: "ing$" },
-  46: { letters: "-ed",     sound: "suffix",  emoji: "⬆️", keyword: "jumped",  heroBg: "bg-violet-50",  heroText: "text-violet-700", highlight: "ed$" },
-  47: { letters: "-ful -ly -tion", sound: "suffixes", emoji: "🌟", keyword: "helpful", heroBg: "bg-amber-50", heroText: "text-amber-700" },
-  48: { letters: "pre·fix·suf·fix", sound: "big words", emoji: "🦋", keyword: "butterfly", heroBg: "bg-rose-50", heroText: "text-rose-700" },
+  // Stage 1 — m s f a p t c i
+  1:  { letters: "m",              sound: "/m/",      emoji: "🦟", keyword: "mat",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "m" },
+  2:  { letters: "s",              sound: "/s/",      emoji: "🐍", keyword: "sun",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "s" },
+  3:  { letters: "f",              sound: "/f/",      emoji: "🐸", keyword: "fan",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "f" },
+  4:  { letters: "a",              sound: "/a/",      emoji: "🍎", keyword: "ant",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "a" },
+  5:  { letters: "p",              sound: "/p/",      emoji: "🐧", keyword: "pot",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "p" },
+  6:  { letters: "t",              sound: "/t/",      emoji: "🐢", keyword: "tap",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "t" },
+  7:  { letters: "c",              sound: "/k/",      emoji: "🐱", keyword: "cat",     heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "c" },
+  8:  { letters: "i",              sound: "/i/",      emoji: "🦔", keyword: "it",      heroBg: "bg-amber-50",   heroText: "text-amber-700",   highlight: "i" },
+  // Stage 2 — b h n o d g l v
+  9:  { letters: "b",              sound: "/b/",      emoji: "🐝", keyword: "bat",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "b" },
+  10: { letters: "h",              sound: "/h/",      emoji: "🏠", keyword: "hat",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "h" },
+  11: { letters: "n",              sound: "/n/",      emoji: "🪺", keyword: "net",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "n" },
+  12: { letters: "o",              sound: "/o/",      emoji: "🐙", keyword: "on",      heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "o" },
+  13: { letters: "d",              sound: "/d/",      emoji: "🐶", keyword: "dog",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "d" },
+  14: { letters: "g",              sound: "/g/",      emoji: "🐊", keyword: "got",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "g" },
+  15: { letters: "l",              sound: "/l/",      emoji: "🦁", keyword: "lip",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "l" },
+  16: { letters: "v",              sound: "/v/",      emoji: "🎻", keyword: "van",     heroBg: "bg-sky-50",     heroText: "text-sky-700",     highlight: "v" },
+  // Stage 3 — y r e qu z
+  17: { letters: "y",              sound: "/y/",      emoji: "🪀", keyword: "yes",     heroBg: "bg-emerald-50", heroText: "text-emerald-700", highlight: "^y" },
+  18: { letters: "r",              sound: "/r/",      emoji: "🌈", keyword: "run",     heroBg: "bg-emerald-50", heroText: "text-emerald-700", highlight: "r" },
+  19: { letters: "e",              sound: "/e/",      emoji: "🥚", keyword: "egg",     heroBg: "bg-emerald-50", heroText: "text-emerald-700", highlight: "e" },
+  20: { letters: "qu",             sound: "/kw/",     emoji: "👑", keyword: "quit",    heroBg: "bg-emerald-50", heroText: "text-emerald-700", highlight: "qu" },
+  21: { letters: "z",              sound: "/z/",      emoji: "⚡", keyword: "zip",     heroBg: "bg-emerald-50", heroText: "text-emerald-700", highlight: "z" },
+  // Stage 4 — j u k x w
+  22: { letters: "j",              sound: "/j/",      emoji: "🃏", keyword: "jet",     heroBg: "bg-violet-50",  heroText: "text-violet-700",  highlight: "j" },
+  23: { letters: "u",              sound: "/u/",      emoji: "☂️",  keyword: "up",      heroBg: "bg-violet-50",  heroText: "text-violet-700",  highlight: "u" },
+  24: { letters: "k",              sound: "/k/",      emoji: "🔑", keyword: "kit",     heroBg: "bg-violet-50",  heroText: "text-violet-700",  highlight: "k" },
+  25: { letters: "x",              sound: "/ks/",     emoji: "🦊", keyword: "fox",     heroBg: "bg-violet-50",  heroText: "text-violet-700",  highlight: "x" },
+  26: { letters: "w",              sound: "/w/",      emoji: "🌊", keyword: "wet",     heroBg: "bg-violet-50",  heroText: "text-violet-700",  highlight: "w" },
+  // Stage 4+ — doubles & plurals
+  27: { letters: "ll · ss · ff · zz", sound: "doubles", emoji: "🔁", keyword: "bell", heroBg: "bg-rose-50",    heroText: "text-rose-700",    highlight: "ll|ss|ff|zz" },
+  // Stage 5 — consonant blends & ck
+  28: { letters: "CVCC",           sound: "end blends",  emoji: "🔗", keyword: "band",   heroBg: "bg-orange-50",  heroText: "text-orange-700" },
+  29: { letters: "bl · cl · fl",   sound: "l-blends",    emoji: "🧱", keyword: "flag",   heroBg: "bg-orange-50",  heroText: "text-orange-700" },
+  30: { letters: "br · cr · tr",   sound: "r-blends",    emoji: "🦀", keyword: "crab",   heroBg: "bg-orange-50",  heroText: "text-orange-700" },
+  31: { letters: "ck",             sound: "/k/",          emoji: "🔒", keyword: "back",   heroBg: "bg-orange-50",  heroText: "text-orange-700", highlight: "ck" },
+  32: { letters: "-ed",            sound: "past tense",   emoji: "⏮️", keyword: "jumped", heroBg: "bg-orange-50",  heroText: "text-orange-700", highlight: "ed$" },
+  33: { letters: "st · sp · sw",   sound: "s-blends",     emoji: "⭐", keyword: "stop",   heroBg: "bg-orange-50",  heroText: "text-orange-700" },
+  // Stage 6 — digraphs
+  34: { letters: "sh",             sound: "/sh/",     emoji: "🤫", keyword: "ship",    heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "sh" },
+  35: { letters: "ch",             sound: "/ch/",     emoji: "🪑", keyword: "chip",    heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "ch" },
+  36: { letters: "tch",            sound: "/ch/",     emoji: "⌚", keyword: "catch",   heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "tch" },
+  37: { letters: "th",             sound: "/th/",     emoji: "🦷", keyword: "this",    heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "th" },
+  38: { letters: "ng",             sound: "/ng/",     emoji: "🔔", keyword: "ring",    heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "ng" },
+  39: { letters: "ph",             sound: "/f/",      emoji: "📱", keyword: "phone",   heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "ph" },
+  40: { letters: "wh",             sound: "/w/",      emoji: "🌬️", keyword: "when",    heroBg: "bg-teal-50",    heroText: "text-teal-700",    highlight: "wh" },
+  // Stage 7.1 — long vowel teams
+  41: { letters: "ai · ay",        sound: "/ā/",      emoji: "🌧️", keyword: "rain",    heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "ai|ay" },
+  42: { letters: "ee · ea",        sound: "/ē/",      emoji: "🌿", keyword: "feet",    heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "ee|ea" },
+  43: { letters: "--y · eigh · ey", sound: "/ē/ /ā/", emoji: "🗝️", keyword: "funny",   heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "y$|eigh|ey" },
+  44: { letters: "igh · -y",       sound: "/ī/",      emoji: "🌙", keyword: "night",   heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "igh" },
+  45: { letters: "ie",             sound: "/ī/",      emoji: "🥧", keyword: "pie",     heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "ie" },
+  46: { letters: "oa",             sound: "/ō/",      emoji: "⛵", keyword: "boat",    heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "oa" },
+  47: { letters: "-ing",           sound: "present",  emoji: "🏃", keyword: "running", heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "ing$" },
+  48: { letters: "un-",            sound: "prefix",   emoji: "🔓", keyword: "unlock",  heroBg: "bg-purple-50",  heroText: "text-purple-700",  highlight: "^un" },
+  // Stage 7.2 — r-controlled vowels
+  49: { letters: "ar · a · al",    sound: "/ar/",     emoji: "🚗", keyword: "car",     heroBg: "bg-indigo-50",  heroText: "text-indigo-700",  highlight: "ar" },
+  50: { letters: "or · aw · ore",  sound: "/or/",     emoji: "🌽", keyword: "for",     heroBg: "bg-indigo-50",  heroText: "text-indigo-700",  highlight: "or|aw|ore" },
+  51: { letters: "ir · ur · er",   sound: "/er/",     emoji: "🐦", keyword: "bird",    heroBg: "bg-indigo-50",  heroText: "text-indigo-700",  highlight: "ir|ur|er" },
+  52: { letters: "air · are · ere", sound: "/air/",   emoji: "🎈", keyword: "fair",    heroBg: "bg-indigo-50",  heroText: "text-indigo-700",  highlight: "air|are|ere" },
+  53: { letters: "-er",            sound: "compare",  emoji: "📏", keyword: "bigger",  heroBg: "bg-indigo-50",  heroText: "text-indigo-700",  highlight: "er$" },
+  // Stage 7.3 — diphthongs & oo sounds
+  54: { letters: "oo · ou · o",    sound: "/oo/ long", emoji: "🌙", keyword: "moon",   heroBg: "bg-fuchsia-50", heroText: "text-fuchsia-700",  highlight: "oo" },
+  55: { letters: "ow · ou",        sound: "/ow/",     emoji: "🐄", keyword: "cow",     heroBg: "bg-fuchsia-50", heroText: "text-fuchsia-700",  highlight: "ow|ou" },
+  56: { letters: "oi · oy",        sound: "/oi/",     emoji: "🪙", keyword: "coin",    heroBg: "bg-fuchsia-50", heroText: "text-fuchsia-700",  highlight: "oi|oy" },
+  57: { letters: "oo · u · oul",   sound: "/oo/ short", emoji: "📚", keyword: "book", heroBg: "bg-fuchsia-50", heroText: "text-fuchsia-700",  highlight: "oo" },
+  // Stage 7.4 — split digraphs & silent letters
+  58: { letters: "a-e · a",        sound: "/ā/",      emoji: "🎂", keyword: "cake",    heroBg: "bg-cyan-50",    heroText: "text-cyan-700" },
+  59: { letters: "i-e · soft c/g", sound: "/ī/ /s/ /j/", emoji: "🧊", keyword: "ice", heroBg: "bg-cyan-50",   heroText: "text-cyan-700",    highlight: "ce|ci|cy|ge|gi|gy" },
+  60: { letters: "e-e · e",        sound: "/ē/",      emoji: "🌳", keyword: "these",   heroBg: "bg-cyan-50",    heroText: "text-cyan-700" },
+  61: { letters: "o-e · ow · oe",  sound: "/ō/",      emoji: "🏠", keyword: "home",    heroBg: "bg-cyan-50",    heroText: "text-cyan-700",    highlight: "ow|oe" },
+  62: { letters: "kn · gn · mb · wr", sound: "silent", emoji: "🔇", keyword: "knot",  heroBg: "bg-cyan-50",    heroText: "text-cyan-700",    highlight: "kn|gn|mb|wr" },
+  63: { letters: "u-e · ue · ew · ui", sound: "/yoo/ /oo/", emoji: "🫐", keyword: "blue", heroBg: "bg-cyan-50", heroText: "text-cyan-700", highlight: "ue|ew|ui" },
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-const PHASE_LABELS: Record<number, string> = {
-  1: "Phase 1 — Foundation (Months 1–3)",
-  2: "Phase 2 — Consolidation (Months 4–6)",
-  3: "Phase 3 — Expansion (Months 7–9)",
-  4: "Phase 4 — Independence (Months 10–12)",
+const STAGE_LABELS: Record<string, string> = {
+  "1":   "Stage 1 — Foundation",
+  "2":   "Stage 2 — Foundation",
+  "3":   "Stage 3 — Foundation",
+  "4":   "Stage 4 — Foundation",
+  "4+":  "Stage 4+ — Doubles & Plurals",
+  "5":   "Stage 5 — Consonant Blends",
+  "6":   "Stage 6 — Digraphs",
+  "7.1": "Stage 7 Unit 1 — Long Vowel Teams",
+  "7.2": "Stage 7 Unit 2 — R-Controlled Vowels",
+  "7.3": "Stage 7 Unit 3 — Diphthongs",
+  "7.4": "Stage 7 Unit 4 — Split Digraphs",
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -105,7 +134,7 @@ export default async function LessonPage({ params }: Props) {
   const skill = await getSkillById(parseInt(id, 10), childId);
   if (!skill) notFound();
 
-  const matchingResources = await getResources(skill.sequenceOrder, skill.sequenceOrder);
+  const matchingResources = await getResources(skill.stage);
 
   const wordList = skill.wordList ? skill.wordList.split(",").map((w) => w.trim()) : [];
   const dictationWords = skill.dictationWords
@@ -131,7 +160,7 @@ export default async function LessonPage({ params }: Props) {
           </Badge>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{skill.name}</h1>
-        <p className="text-sm text-gray-500 mt-1">{PHASE_LABELS[skill.phase]}</p>
+        <p className="text-sm text-gray-500 mt-1">{STAGE_LABELS[skill.stage]}</p>
       </div>
 
       {/* ── Hero phoneme card ─────────────────────────────────── */}

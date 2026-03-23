@@ -31,7 +31,7 @@ type Session = {
 type Skill = {
   id: number;
   status: string;
-  phase: number;
+  stage: string;
 };
 
 export default function ProgressCharts({
@@ -50,15 +50,16 @@ export default function ProgressCharts({
       wpm: a.value,
     }));
 
-  // Skills by phase
-  const phaseData = [1, 2, 3, 4].map((phase) => {
-    const phaseSkills = skills.filter((s) => s.phase === phase);
+  // Skills by stage
+  const STAGES = ["1","2","3","4","4+","5","6","7.1","7.2","7.3","7.4"];
+  const stageData = STAGES.map((stage) => {
+    const stageSkills = skills.filter((s) => s.stage === stage);
     return {
-      name: `Phase ${phase}`,
-      mastered: phaseSkills.filter((s) => s.status === "mastered").length,
-      total: phaseSkills.length,
+      name: `Stage ${stage}`,
+      mastered: stageSkills.filter((s) => s.status === "mastered").length,
+      total: stageSkills.length,
     };
-  });
+  }).filter((d) => d.total > 0);
 
   // Calendar heatmap — last 60 days
   const today = new Date();
@@ -134,13 +135,13 @@ export default function ProgressCharts({
         </Card>
       )}
 
-      {/* Phase progress bars */}
+      {/* Stage progress bars */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Skills by Phase</CardTitle>
+          <CardTitle className="text-base">Skills by Stage</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {phaseData.map((p) => (
+          {stageData.map((p) => (
             <div key={p.name}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-600">{p.name}</span>

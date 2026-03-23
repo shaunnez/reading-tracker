@@ -4,12 +4,18 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { updateSkillStatus } from "@/lib/actions";
 
-const PHASE_INFO = [
-  null,
-  { label: "Phase 1: Foundation", months: "Months 1–3", color: "bg-blue-50 border-blue-200" },
-  { label: "Phase 2: Consolidation", months: "Months 4–6", color: "bg-purple-50 border-purple-200" },
-  { label: "Phase 3: Expansion", months: "Months 7–9", color: "bg-emerald-50 border-emerald-200" },
-  { label: "Phase 4: Independence", months: "Months 10–12", color: "bg-amber-50 border-amber-200" },
+const STAGE_INFO = [
+  { stage: "1",   label: "Stage 1",        description: "m · s · f · a · p · t · c · i",      color: "bg-amber-50 border-amber-200",    badge: "bg-amber-100 text-amber-800" },
+  { stage: "2",   label: "Stage 2",        description: "b · h · n · o · d · g · l · v",      color: "bg-sky-50 border-sky-200",        badge: "bg-sky-100 text-sky-800" },
+  { stage: "3",   label: "Stage 3",        description: "y · r · e · qu · z",                 color: "bg-emerald-50 border-emerald-200", badge: "bg-emerald-100 text-emerald-800" },
+  { stage: "4",   label: "Stage 4",        description: "j · u · k · x · w",                 color: "bg-violet-50 border-violet-200",  badge: "bg-violet-100 text-violet-800" },
+  { stage: "4+",  label: "Stage 4+",       description: "Double letters · Plurals",           color: "bg-rose-50 border-rose-200",      badge: "bg-rose-100 text-rose-800" },
+  { stage: "5",   label: "Stage 5",        description: "Consonant blends · ck",              color: "bg-orange-50 border-orange-200",  badge: "bg-orange-100 text-orange-800" },
+  { stage: "6",   label: "Stage 6",        description: "sh · ch · tch · th · ng · ph · wh",  color: "bg-teal-50 border-teal-200",      badge: "bg-teal-100 text-teal-800" },
+  { stage: "7.1", label: "Stage 7 Unit 1", description: "Long vowel teams · -ing",            color: "bg-purple-50 border-purple-200",  badge: "bg-purple-100 text-purple-800" },
+  { stage: "7.2", label: "Stage 7 Unit 2", description: "R-controlled vowels",                color: "bg-indigo-50 border-indigo-200",  badge: "bg-indigo-100 text-indigo-800" },
+  { stage: "7.3", label: "Stage 7 Unit 3", description: "Diphthongs · oo sounds",             color: "bg-fuchsia-50 border-fuchsia-200", badge: "bg-fuchsia-100 text-fuchsia-800" },
+  { stage: "7.4", label: "Stage 7 Unit 4", description: "Split digraphs · Silent letters",    color: "bg-cyan-50 border-cyan-200",      badge: "bg-cyan-100 text-cyan-800" },
 ];
 
 type Skill = {
@@ -19,7 +25,7 @@ type Skill = {
   sequenceOrder: number;
   status: string;
   examples: string | null;
-  phase: number;
+  stage: string;
   masteredDate: string | null;
 };
 
@@ -73,7 +79,6 @@ export default function PhonicsMap({ skills: initialSkills, childId }: { skills:
     startTransition(() => updateSkillStatus(skill.id, nextStatus, childId));
   };
 
-  const phases = [1, 2, 3, 4];
   const mastered = skills.filter((s) => s.status === "mastered").length;
   const total = skills.length;
 
@@ -86,24 +91,24 @@ export default function PhonicsMap({ skills: initialSkills, childId }: { skills:
         {isPending && <span className="text-indigo-500">Saving…</span>}
       </div>
 
-      {phases.map((phase) => {
-        const phaseSkills = skills.filter((s) => s.phase === phase);
-        const info = PHASE_INFO[phase]!;
-        const phaseMastered = phaseSkills.filter((s) => s.status === "mastered").length;
+      {STAGE_INFO.map((stageInfo) => {
+        const stageSkills = skills.filter((s) => s.stage === stageInfo.stage);
+        if (stageSkills.length === 0) return null;
+        const stageMastered = stageSkills.filter((s) => s.status === "mastered").length;
 
         return (
-          <div key={phase} className={`rounded-xl border p-4 ${info.color}`}>
+          <div key={stageInfo.stage} className={`rounded-xl border p-4 ${stageInfo.color}`}>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="font-semibold text-gray-800">{info.label}</h2>
-                <p className="text-xs text-gray-500">{info.months}</p>
+                <h2 className="font-semibold text-gray-800">{stageInfo.label}</h2>
+                <p className="text-xs text-gray-500">{stageInfo.description}</p>
               </div>
-              <span className="text-sm text-gray-600">
-                {phaseMastered}/{phaseSkills.length} mastered
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${stageInfo.badge}`}>
+                {stageMastered}/{stageSkills.length} mastered
               </span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              {phaseSkills.map((skill) => {
+              {stageSkills.map((skill) => {
                 const cfg = STATUS_CONFIG[skill.status];
                 return (
                   <Link

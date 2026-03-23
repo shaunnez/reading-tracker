@@ -2,7 +2,7 @@
 
 import { getDb } from "./db";
 import { children, childSkillProgress, phonicsSkills, sessions, books, assessments, resources } from "./db/schema";
-import { eq, desc, asc, and, lte, gte, sql } from "drizzle-orm";
+import { eq, desc, asc, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -235,19 +235,21 @@ export async function getSkillById(id: number, childId: string) {
   };
 }
 
-// ---- Resources for a skill level ----
+// ---- Resources for a skill stage ----
 
-export async function getResources(levelMin: number, levelMax: number) {
-  return getDb()
+const STAGE_ORDER = ["1","2","3","4","4+","5","6","7.1","7.2","7.3","7.4"];
+
+export async function getResources(stage: string) {
+  const all = await getDb()
     .select()
     .from(resources)
-    .where(
-      and(
-        lte(resources.phonicsLevelMin, levelMax),
-        gte(resources.phonicsLevelMax, levelMin)
-      )
-    )
     .orderBy(asc(resources.isFree), asc(resources.type));
+  const stageIdx = STAGE_ORDER.indexOf(stage);
+  return all.filter((r) => {
+    const minIdx = STAGE_ORDER.indexOf(r.stageMin ?? "1");
+    const maxIdx = STAGE_ORDER.indexOf(r.stageMax ?? "7.4");
+    return stageIdx >= minIdx && stageIdx <= maxIdx;
+  });
 }
 
 // ---- Placement test result ----
@@ -305,7 +307,7 @@ export async function getDashboardStats(childId: string) {
   const highestMastered = allSkills
     .filter((s) => s.status === "mastered")
     .sort((a, b) => b.sequenceOrder - a.sequenceOrder)[0];
-  const currentPhase = highestMastered ? highestMastered.phase : 1;
+  const currentStage = highestMastered ? highestMastered.stage : "1";
 
   const today = new Date();
   let streak = 0;
@@ -333,7 +335,7 @@ export async function getDashboardStats(childId: string) {
     mastered,
     inProgress,
     total,
-    currentPhase,
+    currentStage,
     streak,
     latestWcpm,
     focusSkill,
