@@ -1,4 +1,5 @@
 import { pgTable, serial, text, integer, date, timestamp, real, primaryKey } from "drizzle-orm/pg-core";
+// Stage values: "1","2","3","4","4+","5","6","7.1","7.2","7.3","7.4"
 
 export const children = pgTable("children", {
   id: text("id").primaryKey(), // 8-char random code — also serves as share code
@@ -25,7 +26,8 @@ export const phonicsSkills = pgTable("phonics_skills", {
   status: text("status").notNull().default("not_started"), // not_started | in_progress | mastered
   masteredDate: date("mastered_date"),
   examples: text("examples"), // comma-separated example words
-  phase: integer("phase").notNull(), // 1-4 maps to months 1-3, 4-6, 7-9, 10-12
+  stage: text("stage").notNull(), // "1","2","3","4","4+","5","6","7.1","7.2","7.3","7.4"
+  heartWords: text("heart_words"), // comma-separated high-frequency heart words for this stage
   // Lesson content
   warmup: text("warmup"),           // oral phonemic awareness activity
   introduction: text("introduction"), // how to introduce the concept (script)
@@ -41,8 +43,8 @@ export const resources = pgTable("resources", {
   description: text("description"),
   type: text("type").notNull(), // book | website | app | printable
   isFree: integer("is_free").notNull().default(1), // 1 = free
-  phonicsLevelMin: integer("phonics_level_min").notNull().default(1),
-  phonicsLevelMax: integer("phonics_level_max").notNull().default(48),
+  stageMin: text("stage_min").default("1"),
+  stageMax: text("stage_max").default("7.4"),
 });
 
 export const sessions = pgTable("sessions", {
